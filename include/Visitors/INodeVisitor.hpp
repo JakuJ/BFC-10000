@@ -10,6 +10,8 @@ class OutputNode;
 
 class LoopNode;
 
+class SequenceNode;
+
 struct INodeVisitor {
     virtual void visitMoveNode(MoveNode *) {}
 
@@ -20,4 +22,6 @@ struct INodeVisitor {
     virtual void visitOutputNode(OutputNode *) {}
 
     virtual void visitLoopNode(LoopNode *) {}
+
+    virtual void visitSequenceNode(SequenceNode *) {}
 };

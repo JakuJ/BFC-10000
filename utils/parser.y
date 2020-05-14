@@ -1,15 +1,21 @@
 %{
+#include <iostream>
 
-#include <stdio.h>
+#include <ASTBuilder.hpp>
+#include <Nodes/MoveNode.hpp>
+#include <Nodes/AddNode.hpp>
+#include <Nodes/InputNode.hpp>
+#include <Nodes/OutputNode.hpp>
 
-extern int yylex();
+extern "C" int yylex();
 
 unsigned int lineNumber = 1;
 
 void yyerror (char const *s) {
-   // std::cerr << "Parsing error at line " << lineNumber << ": " << s << std::endl;
-   printf("Parsing error at line %d: %s\n", lineNumber, s);
+   std::cerr << "Parsing error at line " << lineNumber << ": " << s << std::endl;
 }
+
+ASTBuilder builder;
 
 %}
 
@@ -23,27 +29,19 @@ void yyerror (char const *s) {
 
 %%
 
-ROOT    : TEXT ;
+ROOT    : STRING ;
 
-TEXT    : TEXT STRING | %empty ;
+STRING  : STRING OP | %empty ;
 
-STRING  : UNOS | PARENS ;
-
-UNOS    : UNOS UNO | %empty ;
-
-PARENS  : OPEN INSIDE ;
-
-INSIDE  : TEXT CLOSE
-        | CLOSE { yyerror("Potential infinite loop []"); }
-        ;
-
-UNO     : NEWLINE { ++lineNumber; }
-        | LEFT
-        | RIGHT
-        | PLUS
-        | MINUS
-        | READ
-        | WRITE
+OP      : NEWLINE   { ++lineNumber; }
+        | LEFT      { builder.addOperation(new MoveNode(-1)); }
+        | RIGHT     { builder.addOperation(new MoveNode(1)); }
+        | PLUS      { builder.addOperation(new AddNode(1)); }
+        | MINUS     { builder.addOperation(new AddNode(-1)); }
+        | READ      { builder.addOperation(new InputNode()); }
+        | WRITE     { builder.addOperation(new OutputNode()); }
+        | OPEN      { builder.beginLoop(); }
+        | CLOSE     { builder.endLoop(); }
         ;
 
 %%

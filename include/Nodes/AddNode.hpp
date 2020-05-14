@@ -1,11 +1,11 @@
 #pragma once
 
-#include <INode.hpp>
+#include <Nodes/IOperation.hpp>
 
-struct AddNode : public INode {
+struct AddNode : public IOperation {
     int value;
 
-    explicit AddNode(int value) : value(value) {}
+    explicit AddNode(int value) : IOperation(value > 0 ? '+' : '-'), value(value) {}
 
     ~AddNode() override = default;
 

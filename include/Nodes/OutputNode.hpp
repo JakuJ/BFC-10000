@@ -1,9 +1,11 @@
 #pragma once
 
-#include <INode.hpp>
+#include <Nodes/IOperation.hpp>
 
-class OutputNode : public INode {
+class OutputNode : public IOperation {
 public:
+    OutputNode() : IOperation('.') {}
+
     ~OutputNode() override = default;
 
     void accept(INodeVisitor &visitor) override {

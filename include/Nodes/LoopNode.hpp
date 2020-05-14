@@ -3,14 +3,15 @@
 #include <memory>
 #include <utility>
 
-#include <INode.hpp>
+#include <Nodes/INode.hpp>
+#include <Nodes/SequenceNode.hpp>
 
 struct LoopNode : public INode {
-    std::unique_ptr<INode> inside;
+    SequenceNode *inside;
 
-    explicit LoopNode(std::unique_ptr<INode> inside) : inside(std::move(inside)) {}
+    LoopNode() : inside(new SequenceNode()) {}
 
-    ~LoopNode() override = default;
+    ~LoopNode() override { delete inside; };
 
     void accept(INodeVisitor &visitor) override {
         visitor.visitLoopNode(this);
