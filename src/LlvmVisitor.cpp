@@ -49,17 +49,6 @@ LLVMVisitor::LLVMVisitor() {
     // Create an IRBuilder
     builder = std::make_unique<IRBuilder<>>(context);
 
-    // Declare the "memset" function
-//    std::vector<Type *> memset_params{
-//            Type::getInt8PtrTy(context),
-//            Type::getInt8Ty(context),
-//            Type::getInt64Ty(context),
-//            Type::getInt32Ty(context),
-//            Type::getInt1Ty(context),
-//    };
-//    FunctionType *memsetType = FunctionType::get(Type::getVoidTy(context), memset_params, false);
-//    Function::Create(memsetType, Function::ExternalLinkage, "memset", module.get());
-
     // Declare the "printf" function
     std::vector<Type *> printf_params{Type::getInt8PtrTy(context)};
     FunctionType *printfType = FunctionType::get(Type::getInt64Ty(context), printf_params, true);
@@ -74,55 +63,40 @@ LLVMVisitor::LLVMVisitor() {
     builder->SetInsertPoint(BB);
 
     // Create global variables
-    builder->CreateGlobalString("%c\n", "format");
+    builder->CreateGlobalString("%c", "format");
 
     // Create a named stack variable - an i64 index
     variables["index"] = builder->CreateAlloca(Type::getInt64Ty(context), nullptr, "index");
     builder->CreateStore(ConstantInt::get(Type::getInt64Ty(context), 0), variables["index"]);
 
-    // Create an array of i8s
+    // Create a global array of i8s
     auto array_type = ArrayType::get(Type::getInt8Ty(context), 30000);
-    auto array = builder->CreateAlloca(array_type, nullptr, "tape");
+    module->getOrInsertGlobal("tape", array_type);
 
-//    std::vector<Value *> memset_args{
-//            builder->CreateBitCast(array, Type::getInt8PtrTy(context)),
-//            ConstantInt::get(context, APInt(8, 0, true)),
-//            ConstantInt::get(context, APInt(64, 30000, false)),
-//            ConstantInt::get(context, APInt(32, 8, false)),
-//            ConstantInt::get(context, APInt(1, 0, false))
-//    };
+    GlobalVariable *array = module->getNamedGlobal("tape");
+    array->setLinkage(GlobalValue::LinkageTypes::PrivateLinkage);
 
-//    builder->CreateCall(module->getFunction("memset"), memset_args);
+    ConstantInt *const_int_val = ConstantInt::get(context, APInt(8, 0));
+    array->setInitializer(const_int_val);
 
-    variables["tape"] = array;
+    variables["tape"] = builder->CreateBitCast(array, Type::getInt8PtrTy(context));
 }
 
 Value *LLVMVisitor::getCurrentPtr() {
-    // Cast the index to the beginning of the tape to an integer
-    auto tape_ptr = builder->CreatePtrToInt(variables["tape"], Type::getInt64Ty(context), "tape_int");
-
     // Load the current index value
-    auto index = builder->CreateLoad(variables["index"], "index");
+    auto index = builder->CreateLoad(variables["index"], "tmp_index");
 
-    auto ptr_int = builder->CreateAdd(tape_ptr, index, "pointer_int");
-
-    //
-
-//    auto offset = builder->CreateGEP(variables["tape"], index, "pointer");
-//    return offset;
-
-    //
-
-    return builder->CreateIntToPtr(ptr_int, Type::getInt8PtrTy(context), "pointer");
+    // Return the array pointer offset by that index
+    return builder->CreateGEP(variables["tape"], index, "cur_arr_ptr");
 }
 
 void LLVMVisitor::visitMoveNode(MoveNode *node) {
     auto index = variables["index"];
 
-    auto const1 = ConstantInt::get(context, APInt(64, node->distance, true));
+    auto dist = ConstantInt::get(context, APInt(64, node->distance, true));
 
-    auto loaded = builder->CreateLoad(index, "tmp_ptr");
-    auto next = builder->CreateAdd(loaded, const1, "inc_tmp");
+    auto loaded = builder->CreateLoad(index, "tmp_index");
+    auto next = builder->CreateAdd(loaded, dist, "new_index");
     builder->CreateStore(next, index);
 }
 
@@ -130,7 +104,7 @@ void LLVMVisitor::visitAddNode(AddNode *node) {
     auto current_ptr = getCurrentPtr();
 
     auto current = builder->CreateLoad(current_ptr, "current");
-    auto value = ConstantInt::get(context, APInt(8, node->value, true));
+    auto value = ConstantInt::get(context, APInt(8, static_cast<char>(node->value), true));
 
     auto next = builder->CreateAdd(current, value, "new");
     builder->CreateStore(next, current_ptr);

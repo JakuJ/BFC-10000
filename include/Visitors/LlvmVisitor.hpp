@@ -20,7 +20,7 @@ class LLVMVisitor : public INodeVisitor {
 
     Function *main;
 
-    std::map<std::string, AllocaInst *> variables;
+    std::map<std::string, Value *> variables;
 
 public:
     LLVMVisitor();
