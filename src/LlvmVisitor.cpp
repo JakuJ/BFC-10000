@@ -125,7 +125,26 @@ void LLVMVisitor::visitOutputNode([[maybe_unused]] OutputNode *node) {
 }
 
 void LLVMVisitor::visitLoopNode(LoopNode *node) {
+    auto scope = builder->GetInsertBlock()->getParent();
+
+    BasicBlock *check = BasicBlock::Create(context, "loop_check", scope);
+    BasicBlock *body = BasicBlock::Create(context, "loop_body");
+    BasicBlock *end = BasicBlock::Create(context, "loop_end");;
+
+    builder->CreateBr(check);
+    builder->SetInsertPoint(check);
+
+    auto current = builder->CreateLoad(getCurrentPtr(), "current");
+    auto nonzero = builder->CreateICmpNE(current, ConstantInt::get(Type::getInt8Ty(context), 0), "nonzero");
+    builder->CreateCondBr(nonzero, body, end);
+
+    scope->getBasicBlockList().push_back(body);
+    builder->SetInsertPoint(body);
     node->inside->accept(*this);
+    builder->CreateBr(check);
+
+    scope->getBasicBlockList().push_back(end);
+    builder->SetInsertPoint(end);
 }
 
 void LLVMVisitor::visitSequenceNode(SequenceNode *node) {
