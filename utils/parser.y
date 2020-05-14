@@ -1,11 +1,11 @@
 %{
 #include <iostream>
 
-#include <ASTBuilder.hpp>
 #include <Nodes/MoveNode.hpp>
 #include <Nodes/AddNode.hpp>
 #include <Nodes/InputNode.hpp>
 #include <Nodes/OutputNode.hpp>
+#include <ASTBuilder.hpp>
 
 extern "C" int yylex();
 

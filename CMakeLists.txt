@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.17)
 project(Compiler)
 
-set(CMAKE_CXX_COMPILER g++-9)
+set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-I/usr/local/opt/flex/include")
 
@@ -26,12 +26,14 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 include_directories(${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
-# Sources
+# Common sources
 
 include_directories(include)
 
 file(GLOB HEADERS include/*.hpp)
 file(GLOB SOURCES src/*.cpp)
+
+# Interpreter
 
 add_executable(
         interpreter
@@ -41,7 +43,18 @@ add_executable(
         ${BISON_parser_OUTPUTS}
         ${FLEX_scanner_OUTPUTS})
 
-#llvm_map_components_to_libnames(llvm_libs support core irreader)
-#
-## Link against LLVM libraries
-#target_link_libraries(compiler ${llvm_libs})
+# Compiler
+
+add_executable(
+        compiler
+        compiler.cpp
+        ${HEADERS}
+        ${SOURCES}
+        ${BISON_parser_OUTPUTS}
+        ${FLEX_scanner_OUTPUTS})
+
+llvm_map_components_to_libnames(llvm_libs support core passes x86asmparser x86codegen x86utils)
+
+# Link against LLVM libraries
+target_link_libraries(compiler ${llvm_libs})
+target_link_libraries(interpreter ${llvm_libs}) # too lazy to not GLOB sources
