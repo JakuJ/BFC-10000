@@ -40,9 +40,9 @@ OP      : NEWLINE   { ++lineNumber; }
         | MINUS     { builder.addOperation(new AddNode(-1)); }
         | READ      { builder.addOperation(new InputNode()); }
         | WRITE     { builder.addOperation(new OutputNode()); }
-        | OPEN      { builder.beginLoop(); }
-        | CLOSE     { builder.endLoop(); }
+        | LOOP
         ;
 
-%%
+LOOP    : OPEN { builder.beginLoop(); } STRING CLOSE { builder.endLoop(); }
 
+%%

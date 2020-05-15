@@ -143,7 +143,7 @@ void LLVMVisitor::visitInputNode(InputNode *node) {
 
     scope->getBasicBlockList().push_back(_else);
     builder->SetInsertPoint(_else);
-    auto byte = builder->CreateBitCast(read, builder->getInt8Ty(), "byte_char");
+    auto byte = builder->CreateIntCast(read, builder->getInt8Ty(), false, "byte_char");
     builder->CreateStore(byte, getCurrentPtr());
     builder->CreateBr(merge);
 
