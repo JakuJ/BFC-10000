@@ -39,6 +39,8 @@ public:
 
     void visitAddNode(AddNode *) override;
 
+    void visitSetNode(SetNode *node) override;
+
     void visitInputNode(InputNode *) override;
 
     void visitOutputNode(OutputNode *) override;

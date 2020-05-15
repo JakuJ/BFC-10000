@@ -22,4 +22,6 @@ public:
     void visitLoopNode(LoopNode *node) override;
 
     void visitSequenceNode(SequenceNode *node) override;
+
+    void visitSetNode(SetNode *node) override;
 };

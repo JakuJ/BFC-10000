@@ -1,4 +1,4 @@
-#include "Visitors/ContractingVisitor.hpp"
+#include "Visitors/Passes/ContractingVisitor.hpp"
 
 #include <Nodes/SequenceNode.hpp>
 #include <Nodes/LoopNode.hpp>
@@ -17,8 +17,10 @@ void ContractingVisitor::visitSequenceNode(SequenceNode *node) {
     folded.reserve(node->nodes.size());
 
     INode *lastNode = node->nodes.front();
-
     folded.push_back(lastNode);
+
+    // special case - optimize if loop
+    lastNode->accept(*this);
 
     for (int i = 1; i < node->nodes.size(); i++) {
         INode *n = node->nodes[i];

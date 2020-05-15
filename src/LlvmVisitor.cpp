@@ -27,6 +27,7 @@
 #include <Nodes/MoveNode.hpp>
 #include <Nodes/LoopNode.hpp>
 #include <Nodes/AddNode.hpp>
+#include <Nodes/SetNode.hpp>
 
 using namespace llvm;
 
@@ -121,6 +122,14 @@ void LLVMVisitor::visitAddNode(AddNode *node) {
 
     auto next = builder->CreateAdd(current, value, "new");
     builder->CreateStore(next, current_ptr);
+}
+
+void LLVMVisitor::visitSetNode(SetNode *node) {
+    auto current_ptr = getCurrentPtr();
+
+    auto value = ConstantInt::get(context, APInt(8, static_cast<char>(node->value), true));
+
+    builder->CreateStore(value, current_ptr);
 }
 
 void LLVMVisitor::visitInputNode(InputNode *node) {
@@ -226,7 +235,7 @@ int LLVMVisitor::compile(const std::string &path) {
     module->setTargetTriple(TargetTriple);
 
     std::error_code EC;
-    raw_fd_ostream dest(path.c_str(), EC, sys::fs::OF_None);
+    raw_fd_ostream dest(path, EC, sys::fs::OF_None);
 
     if (EC) {
         std::cerr << "Could not open file: " << EC.message();

@@ -4,9 +4,10 @@
 #include <parser.hpp>
 #include <AstBuilder.hpp>
 #include <Visitors/LlvmVisitor.hpp>
-#include <Visitors/ContractingVisitor.hpp>
+#include <Visitors/Passes/ContractingVisitor.hpp>
 #include <Visitors/PrintingVisitor.hpp>
 #include <getopt.h>
+#include <Visitors/Passes/ZeroOutVisitor.hpp>
 
 extern FILE *yyin;
 extern unsigned int lineNumber;
@@ -23,12 +24,12 @@ void usage() {
 std::string remove_extension(const char *path) {
     auto filename = std::string(path);
 
-    size_t last_slash = filename.find_last_of("/");
+    size_t last_slash = filename.find_last_of('/');
     if (last_slash != std::string::npos) {
         filename = filename.substr(last_slash + 1);
     }
 
-    size_t lastdot = filename.find_last_of(".");
+    size_t lastdot = filename.find_last_of('.');
     if (lastdot != std::string::npos) {
         filename = filename.substr(0, lastdot);
     }
@@ -95,6 +96,9 @@ int main(int argc, char *argv[]) {
 
     ContractingVisitor folder;
     ast->accept(folder);
+
+    ZeroOutVisitor zeroOut;
+    ast->accept(zeroOut);
 
     if (emit_bf_ir) {
         std::cerr << " done\nDumping BF IR... ";

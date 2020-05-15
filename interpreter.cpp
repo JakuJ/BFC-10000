@@ -4,7 +4,7 @@
 #include <parser.hpp>
 #include <AstBuilder.hpp>
 #include <Visitors/InterpretingVisitor.hpp>
-#include <Visitors/ContractingVisitor.hpp>
+#include <Visitors/Passes/ContractingVisitor.hpp>
 
 extern FILE *yyin;
 extern unsigned int lineNumber;

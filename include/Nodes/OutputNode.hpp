@@ -8,8 +8,6 @@ public:
         symbol = '.';
     }
 
-    ~OutputNode() override = default;
-
     void accept(INodeVisitor &visitor) override {
         visitor.visitOutputNode(this);
     }

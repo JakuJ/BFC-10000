@@ -5,6 +5,7 @@
 #include <Nodes/MoveNode.hpp>
 #include <Nodes/AddNode.hpp>
 #include <Nodes/LoopNode.hpp>
+#include <Nodes/SetNode.hpp>
 
 InterpretingVisitor::InterpretingVisitor() : tape(30000, 0), pointer(0) {}
 
@@ -14,6 +15,10 @@ void InterpretingVisitor::visitMoveNode(MoveNode *node) {
 
 void InterpretingVisitor::visitAddNode(AddNode *node) {
     tape[pointer] += node->value;
+}
+
+void InterpretingVisitor::visitSetNode(SetNode *node) {
+    tape[pointer] = node->value;
 }
 
 void InterpretingVisitor::visitInputNode([[maybe_unused]] InputNode *node) {
@@ -41,3 +46,4 @@ void InterpretingVisitor::visitSequenceNode(SequenceNode *node) {
         op->accept(*this);
     }
 }
+

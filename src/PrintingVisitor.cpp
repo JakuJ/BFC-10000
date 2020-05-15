@@ -6,6 +6,7 @@
 #include <Nodes/MoveNode.hpp>
 #include <Nodes/LoopNode.hpp>
 #include <Nodes/AddNode.hpp>
+#include <Nodes/SetNode.hpp>
 
 PrintingVisitor::PrintingVisitor(const std::string &path) {
     out = new std::ofstream(path);
@@ -21,6 +22,10 @@ void PrintingVisitor::visitMoveNode(MoveNode *node) {
 
 void PrintingVisitor::visitAddNode(AddNode *node) {
     *out << "Add " << node->value << std::endl;
+}
+
+void PrintingVisitor::visitSetNode(SetNode *node) {
+    *out << "Set to " << node->value << std::endl;
 }
 
 void PrintingVisitor::visitInputNode(InputNode *node) {
