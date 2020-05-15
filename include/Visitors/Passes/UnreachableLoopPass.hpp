@@ -1,10 +1,12 @@
 #pragma once
 
-#include <Visitors/INodeVisitor.hpp>
+#include "OptimizationPass.hpp"
 
-class ZeroOutVisitor : public INodeVisitor {
+class UnreachableLoopPass : public OptimizationPass {
 public:
     void visitLoopNode(LoopNode *node) override;
 
     void visitSequenceNode(SequenceNode *node) override;
+
+    void dumpStats() const override;
 };

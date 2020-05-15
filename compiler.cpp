@@ -1,21 +1,24 @@
+#include <getopt.h>
 #include <iostream>
 #include <cstdio>
 
 #include <parser.hpp>
 #include <AstBuilder.hpp>
-#include <Visitors/LlvmVisitor.hpp>
-#include <Visitors/Passes/ContractingVisitor.hpp>
 #include <Visitors/PrintingVisitor.hpp>
-#include <getopt.h>
-#include <Visitors/Passes/ZeroOutVisitor.hpp>
+#include <Visitors/LlvmVisitor.hpp>
+#include <Visitors/Passes/ContractingPass.hpp>
+#include <Visitors/Passes/SetZeroPass.hpp>
+#include <Visitors/Passes/UnreachableLoopPass.hpp>
+#include <Visitors/Passes/PassManager.hpp>
 
 extern FILE *yyin;
 extern unsigned int lineNumber;
 extern ASTBuilder builder;
 
 void usage() {
-    std::cerr << "Usage: compiler [-hbOS] [-o <output file>] <source file>" << std::endl;
+    std::cerr << "Usage: compiler [-hvbOS] [-o <output file>] <source file>" << std::endl;
     std::cerr << "\t-h\t Print this help" << std::endl;
+    std::cerr << "\t-v\t Verbose output about optimization passes" << std::endl;
     std::cerr << "\t-b\t Emit optimized Brainfuck IR" << std::endl;
     std::cerr << "\t-S\t Emit LLVM IR" << std::endl;
     std::cerr << "\t-O\t Optimize LLVM IR" << std::endl;
@@ -37,17 +40,20 @@ std::string remove_extension(const char *path) {
 }
 
 int main(int argc, char *argv[]) {
-    bool emit_llvm = false, emit_bf_ir = false, optimize = false;
+    bool emit_llvm = false, emit_bf_ir = false, optimize = false, verbose = false;
 
     std::string output_file;
     bool custom_of = false;
 
     int opt;
 
-    while ((opt = getopt(argc, argv, "hbOSo:")) != -1) {
+    while ((opt = getopt(argc, argv, "hvbOSo:")) != -1) {
         switch (opt) {
             case 'b':
                 emit_bf_ir = true;
+                break;
+            case 'v':
+                verbose = true;
                 break;
             case 'O':
                 optimize = true;
@@ -94,14 +100,21 @@ int main(int argc, char *argv[]) {
 
     auto ast = builder.getAST();
 
-    ContractingVisitor folder;
-    ast->accept(folder);
+    PassManager passManager;
 
-    ZeroOutVisitor zeroOut;
-    ast->accept(zeroOut);
+    passManager.addPass(new ContractingPass());
+    passManager.addPass(new UnreachableLoopPass());
+    passManager.addPass(new SetZeroPass());
+
+    passManager.runAll(ast.get());
+
+    if (verbose) {
+        std::cerr << std::endl;
+        passManager.dumpStats();
+    }
 
     if (emit_bf_ir) {
-        std::cerr << " done\nDumping BF IR... ";
+        std::cerr << "done\nDumping BF IR... ";
 
         if (!custom_of) {
             output_file += ".txt";
@@ -114,7 +127,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    std::cerr << " done\nGenerating LLVM IR code... ";
+    std::cerr << "done\nGenerating LLVM IR code... ";
 
     LLVMVisitor codegen;
     ast->accept(codegen);

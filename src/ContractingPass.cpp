@@ -1,14 +1,20 @@
-#include "Visitors/Passes/ContractingVisitor.hpp"
+#include "Visitors/Passes/ContractingPass.hpp"
+
+#include <iostream>
 
 #include <Nodes/SequenceNode.hpp>
 #include <Nodes/LoopNode.hpp>
 #include <Nodes/AddNode.hpp>
 
-void ContractingVisitor::visitLoopNode(LoopNode *node) {
+void ContractingPass::dumpStats() const {
+    std::cerr << "Contractions performed: " << hits << std::endl;
+}
+
+void ContractingPass::visitLoopNode(LoopNode *node) {
     node->inside->accept(*this);
 }
 
-void ContractingVisitor::visitSequenceNode(SequenceNode *node) {
+void ContractingPass::visitSequenceNode(SequenceNode *node) {
     if (node->nodes.empty()) {
         return;
     }
@@ -34,6 +40,7 @@ void ContractingVisitor::visitSequenceNode(SequenceNode *node) {
             case '+':
                 if (lastNode->symbol == '+') {
                     lastNode->value += n->value;
+                    hits++;
                     delete n;
                 } else {
                     folded.push_back(n);
@@ -43,6 +50,7 @@ void ContractingVisitor::visitSequenceNode(SequenceNode *node) {
             case '>':
                 if (lastNode->symbol == '>') {
                     lastNode->value += n->value;
+                    hits++;
                     delete n;
                 } else {
                     folded.push_back(n);

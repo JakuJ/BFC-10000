@@ -4,7 +4,7 @@
 #include <parser.hpp>
 #include <AstBuilder.hpp>
 #include <Visitors/InterpretingVisitor.hpp>
-#include <Visitors/Passes/ContractingVisitor.hpp>
+#include <Visitors/Passes/ContractingPass.hpp>
 
 extern FILE *yyin;
 extern unsigned int lineNumber;
@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 
     auto ast = builder.getAST();
 
-    ContractingVisitor folder;
+    ContractingPass folder;
     ast->accept(folder);
 
     InterpretingVisitor interpreter;
