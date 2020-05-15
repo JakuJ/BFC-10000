@@ -3,10 +3,11 @@
 #include <vector>
 #include <memory>
 #include <Nodes/INode.hpp>
-#include <Nodes/IOperation.hpp>
 
 struct SequenceNode : public INode {
     std::vector<INode *> nodes;
+
+    SequenceNode() : INode('_') {}
 
     ~SequenceNode() override {
         for (auto *ptr : nodes) {

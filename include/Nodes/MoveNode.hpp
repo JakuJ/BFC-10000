@@ -1,11 +1,11 @@
 #pragma once
 
-#include "IOperation.hpp"
+#include "INode.hpp"
 
-struct MoveNode : public IOperation {
+struct MoveNode : public INode {
     int distance;
 
-    explicit MoveNode(int distance) : IOperation(distance > 0 ? '>' : '<'), distance(distance) {}
+    explicit MoveNode(int distance) : INode(distance > 0 ? '>' : '<'), distance(distance) {}
 
     ~MoveNode() override = default;
 

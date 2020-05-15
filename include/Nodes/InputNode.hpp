@@ -1,10 +1,10 @@
 #pragma once
 
-#include "IOperation.hpp"
+#include "INode.hpp"
 
-class InputNode : public IOperation {
+class InputNode : public INode {
 public:
-    InputNode() : IOperation(',') {}
+    InputNode() : INode(',') {}
 
     ~InputNode() override = default;
 

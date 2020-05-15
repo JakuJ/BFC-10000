@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Nodes/IOperation.hpp>
+#include <Nodes/INode.hpp>
 
-class OutputNode : public IOperation {
+class OutputNode : public INode {
 public:
-    OutputNode() : IOperation('.') {}
+    OutputNode() : INode('.') {}
 
     ~OutputNode() override = default;
 

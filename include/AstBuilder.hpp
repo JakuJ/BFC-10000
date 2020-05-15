@@ -2,7 +2,7 @@
 
 #include <stack>
 #include <memory>
-#include <Nodes/IOperation.hpp>
+#include <Nodes/INode.hpp>
 #include <Nodes/SequenceNode.hpp>
 
 class ASTBuilder {
