@@ -19,18 +19,29 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    std::cerr << "Parsing source code... ";
+
     yyin = fopen(argv[1], "r");
     if (yyparse()) {
         return EXIT_FAILURE;
     }
 
-    std::cerr << "Parsed " << lineNumber << " lines of Brainfuck" << std::endl;
+    std::cerr << lineNumber << " lines done\nGenerating code... ";
 
     auto ast = builder.getAST();
 
     LLVMVisitor codegen;
     ast->accept(codegen);
 
-    codegen.dumpCode();
-    return codegen.compile();
+    std::cerr << "done\nOptimizing... ";
+
+    codegen.finalize();
+
+    std::cerr << "done\nCompiling to object file... ";
+
+    int retcode = codegen.compile();
+
+    std::cerr << "done\nAll done" << std::endl;
+
+    return retcode;
 }

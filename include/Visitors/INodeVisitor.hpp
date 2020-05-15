@@ -1,16 +1,16 @@
 #pragma once
 
-class MoveNode;
+struct MoveNode;
 
-class AddNode;
+struct AddNode;
 
 class InputNode;
 
 class OutputNode;
 
-class LoopNode;
+struct LoopNode;
 
-class SequenceNode;
+struct SequenceNode;
 
 struct INodeVisitor {
     virtual void visitMoveNode(MoveNode *) {}

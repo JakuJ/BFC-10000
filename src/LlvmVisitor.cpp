@@ -39,6 +39,7 @@ LLVMVisitor::LLVMVisitor() {
     fpm = std::make_unique<legacy::FunctionPassManager>(module.get());
 
     fpm->add(createPromoteMemoryToRegisterPass());
+    fpm->add(createLoopSimplifyPass());
     fpm->add(createInstructionCombiningPass());
     fpm->add(createReassociatePass());
     fpm->add(createGVNPass());
@@ -49,13 +50,17 @@ LLVMVisitor::LLVMVisitor() {
     // Create an IRBuilder
     builder = std::make_unique<IRBuilder<>>(context);
 
-    // Declare the "printf" function
-    std::vector<Type *> printf_params{Type::getInt8PtrTy(context)};
-    FunctionType *printfType = FunctionType::get(Type::getInt64Ty(context), printf_params, true);
-    Function::Create(printfType, Function::ExternalLinkage, "printf", module.get());
+    // Declare the "write" function
+    std::vector<Type *> write_args{builder->getInt32Ty(), builder->getInt8PtrTy(), builder->getInt32Ty()};
+    Function::Create(FunctionType::get(builder->getInt32Ty(), write_args, false),
+                     Function::ExternalLinkage, "write", module.get());
+
+    // Declare the "getchar" function
+    FunctionType *getcharType = FunctionType::get(builder->getInt32Ty(), {}, false);
+    Function::Create(getcharType, Function::ExternalLinkage, "getchar", module.get());
 
     // Declare the "main" function of type void(void)
-    FunctionType *mainType = FunctionType::get(Type::getInt64Ty(context), false);
+    FunctionType *mainType = FunctionType::get(builder->getInt32Ty(), false);
     main = Function::Create(mainType, Function::ExternalLinkage, "main", module.get());
 
     // Begin "main" body
@@ -66,20 +71,30 @@ LLVMVisitor::LLVMVisitor() {
     builder->CreateGlobalString("%c", "format");
 
     // Create a named stack variable - an i64 index
-    variables["index"] = builder->CreateAlloca(Type::getInt64Ty(context), nullptr, "index");
-    builder->CreateStore(ConstantInt::get(Type::getInt64Ty(context), 0), variables["index"]);
+    variables["index"] = builder->CreateAlloca(builder->getInt64Ty(), nullptr, "index");
+    builder->CreateStore(ConstantInt::get(builder->getInt64Ty(), 0), variables["index"]);
 
     // Create a global array of i8s
-    auto array_type = ArrayType::get(Type::getInt8Ty(context), 30000);
+    auto array_type = ArrayType::get(builder->getInt8Ty(), 65535);
     module->getOrInsertGlobal("tape", array_type);
 
     GlobalVariable *array = module->getNamedGlobal("tape");
-    array->setLinkage(GlobalValue::LinkageTypes::PrivateLinkage);
+    array->setAlignment(MaybeAlign(1));
+    array->setInitializer(ConstantAggregateZero::get(array_type));
 
-    ConstantInt *const_int_val = ConstantInt::get(context, APInt(8, 0));
-    array->setInitializer(const_int_val);
+    variables["tape"] = builder->CreateBitCast(array, builder->getInt8PtrTy());
+}
 
-    variables["tape"] = builder->CreateBitCast(array, Type::getInt8PtrTy(context));
+void LLVMVisitor::finalize() {
+    // return void
+    builder->CreateRet(ConstantInt::get(builder->getInt32Ty(), 0));
+
+    // verify function and run optimizations
+    verifyFunction(*main);
+
+#if OPTIMIZE
+    fpm->run(*main);
+#endif
 }
 
 Value *LLVMVisitor::getCurrentPtr() {
@@ -111,17 +126,35 @@ void LLVMVisitor::visitAddNode(AddNode *node) {
 }
 
 void LLVMVisitor::visitInputNode(InputNode *node) {
-    INodeVisitor::visitInputNode(node);
+    auto read = builder->CreateCall(module->getFunction("getchar"), {}, "int_char");
+
+    auto scope = builder->GetInsertBlock()->getParent();
+
+    BasicBlock *then = BasicBlock::Create(context, "eof", scope);
+    BasicBlock *_else = BasicBlock::Create(context, "not_eof");
+    BasicBlock *merge = BasicBlock::Create(context, "merge");
+
+    auto cmp = builder->CreateICmpEQ(read, ConstantInt::get(builder->getInt32Ty(), -1, true), "is_eof");
+    builder->CreateCondBr(cmp, then, _else);
+
+    builder->SetInsertPoint(then);
+    builder->CreateStore(ConstantInt::get(builder->getInt8Ty(), 0), getCurrentPtr());
+    builder->CreateBr(merge);
+
+    scope->getBasicBlockList().push_back(_else);
+    builder->SetInsertPoint(_else);
+    auto byte = builder->CreateBitCast(read, builder->getInt8Ty(), "byte_char");
+    builder->CreateStore(byte, getCurrentPtr());
+    builder->CreateBr(merge);
+
+    scope->getBasicBlockList().push_back(merge);
+    builder->SetInsertPoint(merge);
 }
 
 void LLVMVisitor::visitOutputNode([[maybe_unused]] OutputNode *node) {
-    auto format_ptr = builder->CreateBitCast(module->getNamedGlobal("format"), Type::getInt8PtrTy(context));
-
-    auto current = builder->CreateLoad(getCurrentPtr(), "current");
-
-    std::vector<Value *> args{format_ptr, current};
-
-    builder->CreateCall(module->getFunction("printf"), args);
+    auto const1 = ConstantInt::get(builder->getInt32Ty(), 1);
+    std::vector<Value *> args{const1, getCurrentPtr(), const1};
+    builder->CreateCall(module->getFunction("write"), args);
 }
 
 void LLVMVisitor::visitLoopNode(LoopNode *node) {
@@ -135,8 +168,8 @@ void LLVMVisitor::visitLoopNode(LoopNode *node) {
     builder->SetInsertPoint(check);
 
     auto current = builder->CreateLoad(getCurrentPtr(), "current");
-    auto nonzero = builder->CreateICmpNE(current, ConstantInt::get(Type::getInt8Ty(context), 0), "nonzero");
-    builder->CreateCondBr(nonzero, body, end);
+    auto nonzero = builder->CreateICmpEQ(current, ConstantInt::get(builder->getInt8Ty(), 0), "nonzero");
+    builder->CreateCondBr(nonzero, end, body);
 
     scope->getBasicBlockList().push_back(body);
     builder->SetInsertPoint(body);
@@ -154,28 +187,6 @@ void LLVMVisitor::visitSequenceNode(SequenceNode *node) {
 }
 
 void LLVMVisitor::dumpCode() {
-    // return void
-    builder->CreateRet(ConstantInt::get(Type::getInt64Ty(context), 0));
-
-    // verify function and run optimizations
-    verifyFunction(*main);
-
-#if OPTIMIZE
-    fpm->run(*main);
-#endif
-
-//    auto Filename = "output.ll";
-//    std::error_code EC;
-//    raw_fd_ostream dest(Filename, EC, sys::fs::OF_None);
-//
-//    if (EC) {
-//        std::cerr << "Could not open file: " << EC.message();
-//    } else {
-//        module->print(dest, nullptr);
-//        dest.flush();
-//        dest.close();
-//    }
-
     module->print(outs(), nullptr);
 }
 
@@ -198,11 +209,8 @@ int LLVMVisitor::compile() {
         return 1;
     }
 
-//    auto CPU = "generic";
-//    auto Features = "";
-
     auto CPU = "x86-64";
-    auto Features = "+64bit";
+    auto Features = "";
 
     TargetOptions opt;
     auto RM = Optional<Reloc::Model>();
@@ -227,10 +235,6 @@ int LLVMVisitor::compile() {
         std::cerr << "TargetMachine can't emit a file of this type";
         return 1;
     }
-
-#if OPTIMIZE
-    fpm->run(*main);
-#endif
 
     pass.run(*module);
     dest.flush();

@@ -27,6 +27,8 @@ public:
 
     Value *getCurrentPtr();
 
+    void finalize();
+
     void dumpCode();
 
     int compile();

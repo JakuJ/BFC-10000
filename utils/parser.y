@@ -5,7 +5,7 @@
 #include <Nodes/AddNode.hpp>
 #include <Nodes/InputNode.hpp>
 #include <Nodes/OutputNode.hpp>
-#include <ASTBuilder.hpp>
+#include <AstBuilder.hpp>
 
 extern "C" int yylex();
 
