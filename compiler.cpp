@@ -4,22 +4,87 @@
 #include <parser.hpp>
 #include <AstBuilder.hpp>
 #include <Visitors/LlvmVisitor.hpp>
-#include <Visitors/FoldingVisitor.hpp>
+#include <Visitors/ContractingVisitor.hpp>
 #include <Visitors/PrintingVisitor.hpp>
+#include <getopt.h>
 
 extern FILE *yyin;
 extern unsigned int lineNumber;
 extern ASTBuilder builder;
 
 void usage() {
-    std::cout << "Usage: compiler <source file>" << std::endl;
+    std::cerr << "Usage: compiler [-hbOS] [-o <output file>] <source file>" << std::endl;
+    std::cerr << "\t-h\t Print this help" << std::endl;
+    std::cerr << "\t-b\t Emit optimized Brainfuck IR" << std::endl;
+    std::cerr << "\t-S\t Emit LLVM IR" << std::endl;
+    std::cerr << "\t-O\t Optimize LLVM IR" << std::endl;
+}
+
+std::string remove_extension(const char *path) {
+    auto filename = std::string(path);
+
+    size_t last_slash = filename.find_last_of("/");
+    if (last_slash != std::string::npos) {
+        filename = filename.substr(last_slash + 1);
+    }
+
+    size_t lastdot = filename.find_last_of(".");
+    if (lastdot != std::string::npos) {
+        filename = filename.substr(0, lastdot);
+    }
+    return filename;
 }
 
 int main(int argc, char *argv[]) {
+    bool emit_llvm = false, emit_bf_ir = false, optimize = false;
+
+    std::string output_file;
+    bool custom_of = false;
+
+    int opt;
+
+    while ((opt = getopt(argc, argv, "hbOSo:")) != -1) {
+        switch (opt) {
+            case 'b':
+                emit_bf_ir = true;
+                break;
+            case 'O':
+                optimize = true;
+                break;
+            case 'S':
+                emit_llvm = true;
+                break;
+            case 'o':
+                output_file = std::string(optarg);
+                custom_of = true;
+                break;
+            case ':':
+                std::cerr << "Option -" << optopt << " needs a value" << std::endl;
+                usage();
+                exit(EXIT_FAILURE);
+            case '?':
+                std::cerr << "Unknown option:" << optopt << std::endl;
+            case 'h':
+            default:
+                usage();
+                exit(EXIT_FAILURE);
+        }
+    }
+
+    const char *source_file;
+    if (optind < argc) {
+        source_file = argv[optind];
+        if (!custom_of) {
+            output_file = remove_extension(source_file);
+        }
+    } else {
+        std::cerr << "No input files specified" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
     std::cerr << "Parsing source code... ";
 
-    yyin = fopen(argv[1], "r");
+    yyin = fopen(source_file, "r");
     if (yyparse()) {
         return EXIT_FAILURE;
     }
@@ -28,28 +93,50 @@ int main(int argc, char *argv[]) {
 
     auto ast = builder.getAST();
 
-    FoldingVisitor folder;
+    ContractingVisitor folder;
     ast->accept(folder);
 
-//    PrintingVisitor printer;
-//    ast->accept(printer);
+    if (emit_bf_ir) {
+        std::cerr << " done\nDumping BF IR... ";
+
+        if (!custom_of) {
+            output_file += ".txt";
+        }
+
+        PrintingVisitor printer(output_file);
+        ast->accept(printer);
+
+        std::cerr << "done\nAll done" << std::endl;
+        return 0;
+    }
 
     std::cerr << " done\nGenerating LLVM IR code... ";
 
     LLVMVisitor codegen;
     ast->accept(codegen);
 
-    std::cerr << "done\nOptimizing IR... ";
-
     codegen.finalize();
 
-//    codegen.dumpCode();
+    if (optimize) {
+        std::cerr << "done\nOptimizing IR... ";
+        codegen.optimize();
+    }
+
+    if (emit_llvm) {
+        std::cerr << "done\nDumping LLVM IR... ";
+        if (!custom_of) {
+            output_file += ".ll";
+        }
+        codegen.dumpCode(output_file);
+        std::cerr << "done\nAll done" << std::endl;
+        return 0;
+    }
 
     std::cerr << "done\nCompiling to object file... ";
 
-    int retcode = codegen.compile();
+    int ret_code = codegen.compile(output_file);
 
     std::cerr << "done\nAll done" << std::endl;
 
-    return retcode;
+    return ret_code;
 }

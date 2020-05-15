@@ -1,14 +1,14 @@
-#include "Visitors/FoldingVisitor.hpp"
+#include "Visitors/ContractingVisitor.hpp"
 
 #include <Nodes/SequenceNode.hpp>
 #include <Nodes/LoopNode.hpp>
 #include <Nodes/AddNode.hpp>
 
-void FoldingVisitor::visitLoopNode(LoopNode *node) {
+void ContractingVisitor::visitLoopNode(LoopNode *node) {
     node->inside->accept(*this);
 }
 
-void FoldingVisitor::visitSequenceNode(SequenceNode *node) {
+void ContractingVisitor::visitSequenceNode(SequenceNode *node) {
     if (node->nodes.empty()) {
         return;
     }

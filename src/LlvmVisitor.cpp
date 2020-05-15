@@ -13,6 +13,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/GVN.h"
 #include "llvm/Transforms/Utils.h"
+#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/FileSystem.h"
@@ -27,8 +28,6 @@
 #include <Nodes/LoopNode.hpp>
 #include <Nodes/AddNode.hpp>
 
-#define OPTIMIZE 0
-
 using namespace llvm;
 
 LLVMVisitor::LLVMVisitor() {
@@ -39,7 +38,6 @@ LLVMVisitor::LLVMVisitor() {
     fpm = std::make_unique<legacy::FunctionPassManager>(module.get());
 
     fpm->add(createPromoteMemoryToRegisterPass());
-    fpm->add(createLoopSimplifyPass());
     fpm->add(createInstructionCombiningPass());
     fpm->add(createReassociatePass());
     fpm->add(createGVNPass());
@@ -86,15 +84,15 @@ LLVMVisitor::LLVMVisitor() {
 }
 
 void LLVMVisitor::finalize() {
-    // return void
+    // add a return
     builder->CreateRet(ConstantInt::get(builder->getInt32Ty(), 0));
 
-    // verify function and run optimizations
+    // verify the main function
     verifyFunction(*main);
+}
 
-#if OPTIMIZE
+void LLVMVisitor::optimize() {
     fpm->run(*main);
-#endif
 }
 
 Value *LLVMVisitor::getCurrentPtr() {
@@ -186,11 +184,19 @@ void LLVMVisitor::visitSequenceNode(SequenceNode *node) {
     }
 }
 
-void LLVMVisitor::dumpCode() {
-    module->print(outs(), nullptr);
+void LLVMVisitor::dumpCode(const std::string &path) {
+    std::error_code EC;
+    raw_fd_ostream dest(path, EC, sys::fs::OF_None);
+
+    if (EC) {
+        std::cerr << "Could not open file: " << EC.message();
+        return;
+    }
+
+    module->print(dest, nullptr);
 }
 
-int LLVMVisitor::compile() {
+int LLVMVisitor::compile(const std::string &path) {
     auto TargetTriple = sys::getDefaultTargetTriple();
 
     LLVMInitializeX86Target();
@@ -219,9 +225,8 @@ int LLVMVisitor::compile() {
     module->setDataLayout(TargetMachine->createDataLayout());
     module->setTargetTriple(TargetTriple);
 
-    auto Filename = "output.o";
     std::error_code EC;
-    raw_fd_ostream dest(Filename, EC, sys::fs::OF_None);
+    raw_fd_ostream dest(path.c_str(), EC, sys::fs::OF_None);
 
     if (EC) {
         std::cerr << "Could not open file: " << EC.message();

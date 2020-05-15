@@ -2,7 +2,7 @@
 
 #include "INodeVisitor.hpp"
 
-class FoldingVisitor : public INodeVisitor {
+class ContractingVisitor : public INodeVisitor {
     void visitLoopNode(LoopNode *node) override;
 
     void visitSequenceNode(SequenceNode *node) override;

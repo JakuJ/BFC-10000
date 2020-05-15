@@ -1,31 +1,40 @@
 #include "Visitors/PrintingVisitor.hpp"
 
 #include <iostream>
+#include <fstream>
 
 #include <Nodes/MoveNode.hpp>
 #include <Nodes/LoopNode.hpp>
 #include <Nodes/AddNode.hpp>
 
+PrintingVisitor::PrintingVisitor(const std::string &path) {
+    out = new std::ofstream(path);
+}
+
+PrintingVisitor::~PrintingVisitor() {
+    delete out;
+}
+
 void PrintingVisitor::visitMoveNode(MoveNode *node) {
-    std::cout << "Move " << node->value << std::endl;
+    *out << "Move " << node->value << std::endl;
 }
 
 void PrintingVisitor::visitAddNode(AddNode *node) {
-    std::cout << "Add " << node->value << std::endl;
+    *out << "Add " << node->value << std::endl;
 }
 
 void PrintingVisitor::visitInputNode(InputNode *node) {
-    std::cout << "Read" << std::endl;
+    *out << "Read" << std::endl;
 }
 
 void PrintingVisitor::visitOutputNode(OutputNode *node) {
-    std::cout << "Print" << std::endl;
+    *out << "Print" << std::endl;
 }
 
 void PrintingVisitor::visitLoopNode(LoopNode *node) {
-    std::cout << "In loop:" << std::endl;
+    *out << "In loop:" << std::endl;
     node->inside->accept(*this);
-    std::cout << "End loop" << std::endl;
+    *out << "End loop" << std::endl;
 }
 
 void PrintingVisitor::visitSequenceNode(SequenceNode *node) {

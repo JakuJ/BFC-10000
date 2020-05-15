@@ -29,19 +29,21 @@ public:
 
     void finalize();
 
-    void dumpCode();
+    void optimize();
 
-    int compile();
+    void dumpCode(const std::string &);
 
-    void visitMoveNode(MoveNode *node) override;
+    int compile(const std::string &);
 
-    void visitAddNode(AddNode *node) override;
+    void visitMoveNode(MoveNode *) override;
 
-    void visitInputNode(InputNode *node) override;
+    void visitAddNode(AddNode *) override;
 
-    void visitOutputNode(OutputNode *node) override;
+    void visitInputNode(InputNode *) override;
 
-    void visitLoopNode(LoopNode *node) override;
+    void visitOutputNode(OutputNode *) override;
 
-    void visitSequenceNode(SequenceNode *node) override;
+    void visitLoopNode(LoopNode *) override;
+
+    void visitSequenceNode(SequenceNode *) override;
 };

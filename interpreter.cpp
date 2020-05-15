@@ -4,6 +4,7 @@
 #include <parser.hpp>
 #include <AstBuilder.hpp>
 #include <Visitors/InterpretingVisitor.hpp>
+#include <Visitors/ContractingVisitor.hpp>
 
 extern FILE *yyin;
 extern unsigned int lineNumber;
@@ -27,6 +28,9 @@ int main(int argc, char *argv[]) {
     std::cerr << "Parsed " << lineNumber << " lines of Brainfuck" << std::endl;
 
     auto ast = builder.getAST();
+
+    ContractingVisitor folder;
+    ast->accept(folder);
 
     InterpretingVisitor interpreter;
     ast->accept(interpreter);

@@ -1,9 +1,16 @@
 #pragma once
 
 #include "INodeVisitor.hpp"
+#include <string>
 
 class PrintingVisitor : public INodeVisitor {
+    std::ostream *out;
+
 public:
+    explicit PrintingVisitor(const std::string &);
+
+    virtual ~PrintingVisitor();
+
     void visitMoveNode(MoveNode *node) override;
 
     void visitAddNode(AddNode *node) override;
