@@ -9,7 +9,9 @@
 struct LoopNode : public INode {
     SequenceNode *inside;
 
-    LoopNode() : INode('['), inside(new SequenceNode()) {}
+    LoopNode() : inside(new SequenceNode()) {
+        symbol = '[';
+    }
 
     ~LoopNode() override { delete inside; };
 

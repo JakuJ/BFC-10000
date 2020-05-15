@@ -5,7 +5,9 @@
 struct INode {
     char symbol;
 
-    explicit INode(char symbol) : symbol(symbol) {}
+    int value;
+
+    INode() : symbol('?'), value(0) {}
 
     virtual ~INode() = default;
 

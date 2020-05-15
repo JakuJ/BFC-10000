@@ -27,7 +27,7 @@
 #include <Nodes/LoopNode.hpp>
 #include <Nodes/AddNode.hpp>
 
-#define OPTIMIZE 1
+#define OPTIMIZE 0
 
 using namespace llvm;
 
@@ -108,7 +108,7 @@ Value *LLVMVisitor::getCurrentPtr() {
 void LLVMVisitor::visitMoveNode(MoveNode *node) {
     auto index = variables["index"];
 
-    auto dist = ConstantInt::get(context, APInt(64, node->distance, true));
+    auto dist = ConstantInt::get(context, APInt(64, node->value, true));
 
     auto loaded = builder->CreateLoad(index, "tmp_index");
     auto next = builder->CreateAdd(loaded, dist, "new_index");

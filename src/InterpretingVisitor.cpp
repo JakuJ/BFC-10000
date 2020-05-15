@@ -9,7 +9,7 @@
 InterpretingVisitor::InterpretingVisitor() : tape(30000, 0), pointer(0) {}
 
 void InterpretingVisitor::visitMoveNode(MoveNode *node) {
-    pointer += node->distance;
+    pointer += node->value;
 }
 
 void InterpretingVisitor::visitAddNode(AddNode *node) {

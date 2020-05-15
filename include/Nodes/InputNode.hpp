@@ -4,7 +4,9 @@
 
 class InputNode : public INode {
 public:
-    InputNode() : INode(',') {}
+    InputNode() {
+        symbol = ',';
+    }
 
     ~InputNode() override = default;
 

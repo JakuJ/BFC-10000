@@ -7,8 +7,6 @@
 struct SequenceNode : public INode {
     std::vector<INode *> nodes;
 
-    SequenceNode() : INode('_') {}
-
     ~SequenceNode() override {
         for (auto *ptr : nodes) {
             delete ptr;

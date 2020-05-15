@@ -3,9 +3,10 @@
 #include <Nodes/INode.hpp>
 
 struct AddNode : public INode {
-    int value;
-
-    explicit AddNode(int value) : INode(value > 0 ? '+' : '-'), value(value) {}
+    explicit AddNode(int _value) {
+        value = _value;
+        symbol = '+';
+    }
 
     ~AddNode() override = default;
 

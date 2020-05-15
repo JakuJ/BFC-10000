@@ -4,7 +4,9 @@
 
 class OutputNode : public INode {
 public:
-    OutputNode() : INode('.') {}
+    OutputNode() {
+        symbol = '.';
+    }
 
     ~OutputNode() override = default;
 

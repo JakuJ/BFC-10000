@@ -4,6 +4,8 @@
 #include <parser.hpp>
 #include <AstBuilder.hpp>
 #include <Visitors/LlvmVisitor.hpp>
+#include <Visitors/FoldingVisitor.hpp>
+#include <Visitors/PrintingVisitor.hpp>
 
 extern FILE *yyin;
 extern unsigned int lineNumber;
@@ -14,10 +16,6 @@ void usage() {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        usage();
-        return EXIT_FAILURE;
-    }
 
     std::cerr << "Parsing source code... ";
 
@@ -26,16 +24,26 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    std::cerr << lineNumber << " lines done\nGenerating code... ";
+    std::cerr << lineNumber << " lines done\nOptimizing AST... ";
 
     auto ast = builder.getAST();
+
+    FoldingVisitor folder;
+    ast->accept(folder);
+
+//    PrintingVisitor printer;
+//    ast->accept(printer);
+
+    std::cerr << " done\nGenerating LLVM IR code... ";
 
     LLVMVisitor codegen;
     ast->accept(codegen);
 
-    std::cerr << "done\nOptimizing... ";
+    std::cerr << "done\nOptimizing IR... ";
 
     codegen.finalize();
+
+//    codegen.dumpCode();
 
     std::cerr << "done\nCompiling to object file... ";
 
