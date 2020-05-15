@@ -12,8 +12,6 @@
 #include "llvm/Transforms/InstCombine/InstCombine.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/GVN.h"
-#include "llvm/Transforms/Utils.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/FileSystem.h"
@@ -29,37 +27,55 @@
 #include <Nodes/AddNode.hpp>
 #include <Nodes/SetNode.hpp>
 
+#define ZERO_EOF 1
+
 using namespace llvm;
 
 LLVMVisitor::LLVMVisitor() {
     // Create a Module
     module = std::make_unique<Module>("BF JIT", context);
 
-    // Create the optimizer
-    fpm = std::make_unique<legacy::FunctionPassManager>(module.get());
-
-    fpm->add(createPromoteMemoryToRegisterPass());
-    fpm->add(createInstructionCombiningPass());
-    fpm->add(createReassociatePass());
-    fpm->add(createGVNPass());
-    fpm->add(createCFGSimplificationPass());
-
-    fpm->doInitialization();
+    InitializeNativeTarget();
 
     // Create an IRBuilder
     builder = std::make_unique<IRBuilder<>>(context);
 
-    // Declare the "write" function
-    std::vector<Type *> write_args{builder->getInt32Ty(), builder->getInt8PtrTy(), builder->getInt32Ty()};
-    Function::Create(FunctionType::get(builder->getInt32Ty(), write_args, false),
-                     Function::ExternalLinkage, "write", module.get());
+    // Create the optimizer
+    fpm = std::make_unique<legacy::FunctionPassManager>(module.get());
 
-    // Declare the "getchar" function
-    FunctionType *getcharType = FunctionType::get(builder->getInt32Ty(), {}, false);
-    Function::Create(getcharType, Function::ExternalLinkage, "getchar", module.get());
+    fpm->add(createInstructionCombiningPass());
+    fpm->add(createCFGSimplificationPass());
+    fpm->add(createInstructionCombiningPass());
+    fpm->add(createJumpThreadingPass());
+    fpm->add(createCFGSimplificationPass());
+    fpm->add(createInstructionCombiningPass());
+    fpm->add(createCFGSimplificationPass());
+    fpm->add(createReassociatePass());
+    fpm->add(createLoopRotatePass());
+    fpm->add(createLICMPass());
+    fpm->add(createLoopUnswitchPass(false));
+    fpm->add(createInstructionCombiningPass());
+    fpm->add(createIndVarSimplifyPass());
+    fpm->add(createLoopDeletionPass());
+    fpm->add(createLoopUnrollPass());
+    fpm->add(createInstructionCombiningPass());
+    fpm->add(createGVNPass());
+    fpm->add(createSCCPPass());
+    fpm->add(createInstructionCombiningPass());
+    fpm->add(createJumpThreadingPass());
+    fpm->add(createDeadStoreEliminationPass());
+    fpm->add(createAggressiveDCEPass());
+    fpm->add(createCFGSimplificationPass());
 
-    // Declare the "main" function of type void(void)
-    FunctionType *mainType = FunctionType::get(builder->getInt32Ty(), false);
+    fpm->doInitialization();
+
+    // Cache LLVM declarations for write() and getchar().
+    int_type = sizeof(int) == 4 ? IntegerType::getInt32Ty(context) : IntegerType::getInt64Ty(context);
+    write_func = module->getOrInsertFunction("write", int_type, builder->getInt8PtrTy(), int_type);
+    getchar_func = module->getOrInsertFunction("getchar", int_type);
+
+    // Declare the "main" function of type int(void)
+    FunctionType *mainType = FunctionType::get(int_type, false);
     main = Function::Create(mainType, Function::ExternalLinkage, "main", module.get());
 
     // Begin "main" body
@@ -70,8 +86,8 @@ LLVMVisitor::LLVMVisitor() {
     builder->CreateGlobalString("%c", "format");
 
     // Create a named stack variable - an i64 index
-    variables["index"] = builder->CreateAlloca(builder->getInt64Ty(), nullptr, "index");
-    builder->CreateStore(ConstantInt::get(builder->getInt64Ty(), 0), variables["index"]);
+    index = builder->CreateAlloca(builder->getInt64Ty(), nullptr, "index");
+    builder->CreateStore(ConstantInt::get(builder->getInt64Ty(), 0), index);
 
     // Create a global array of i8s
     auto array_type = ArrayType::get(builder->getInt8Ty(), 65535);
@@ -81,12 +97,12 @@ LLVMVisitor::LLVMVisitor() {
     array->setAlignment(MaybeAlign(1));
     array->setInitializer(ConstantAggregateZero::get(array_type));
 
-    variables["tape"] = builder->CreateBitCast(array, builder->getInt8PtrTy());
+    tape = builder->CreateBitCast(array, builder->getInt8PtrTy());
 }
 
 void LLVMVisitor::finalize() {
     // add a return
-    builder->CreateRet(ConstantInt::get(builder->getInt32Ty(), 0));
+    builder->CreateRet(ConstantInt::get(int_type, 0));
 
     // verify the main function
     verifyFunction(*main);
@@ -98,15 +114,13 @@ void LLVMVisitor::optimize() {
 
 Value *LLVMVisitor::getCurrentPtr() {
     // Load the current index value
-    auto index = builder->CreateLoad(variables["index"], "tmp_index");
+    auto tmp_index = builder->CreateLoad(index, "tmp_index");
 
     // Return the array pointer offset by that index
-    return builder->CreateGEP(variables["tape"], index, "cur_arr_ptr");
+    return builder->CreateInBoundsGEP(tape, tmp_index, "new_index");
 }
 
 void LLVMVisitor::visitMoveNode(MoveNode *node) {
-    auto index = variables["index"];
-
     auto dist = ConstantInt::get(context, APInt(64, node->value, true));
 
     auto loaded = builder->CreateLoad(index, "tmp_index");
@@ -127,21 +141,21 @@ void LLVMVisitor::visitAddNode(AddNode *node) {
 void LLVMVisitor::visitSetNode(SetNode *node) {
     auto current_ptr = getCurrentPtr();
 
-    auto value = ConstantInt::get(context, APInt(8, static_cast<char>(node->value), true));
+    auto value = ConstantInt::get(builder->getInt8Ty(), 0);
 
     builder->CreateStore(value, current_ptr);
 }
 
 void LLVMVisitor::visitInputNode(InputNode *node) {
-    auto read = builder->CreateCall(module->getFunction("getchar"), {}, "int_char");
-
+    auto read = builder->CreateCall(getchar_func);
+#if ZERO_EOF
     auto scope = builder->GetInsertBlock()->getParent();
 
     BasicBlock *then = BasicBlock::Create(context, "eof", scope);
     BasicBlock *_else = BasicBlock::Create(context, "not_eof");
     BasicBlock *merge = BasicBlock::Create(context, "merge");
 
-    auto cmp = builder->CreateICmpEQ(read, ConstantInt::get(builder->getInt32Ty(), -1, true), "is_eof");
+    auto cmp = builder->CreateICmpEQ(read, ConstantInt::get(int_type, -1, true), "is_eof");
     builder->CreateCondBr(cmp, then, _else);
 
     builder->SetInsertPoint(then);
@@ -150,18 +164,21 @@ void LLVMVisitor::visitInputNode(InputNode *node) {
 
     scope->getBasicBlockList().push_back(_else);
     builder->SetInsertPoint(_else);
+#endif
     auto byte = builder->CreateIntCast(read, builder->getInt8Ty(), false, "byte_char");
     builder->CreateStore(byte, getCurrentPtr());
+#if ZERO_EOF
     builder->CreateBr(merge);
 
     scope->getBasicBlockList().push_back(merge);
     builder->SetInsertPoint(merge);
+#endif
 }
 
 void LLVMVisitor::visitOutputNode([[maybe_unused]] OutputNode *node) {
-    auto const1 = ConstantInt::get(builder->getInt32Ty(), 1);
+    auto const1 = ConstantInt::get(int_type, 1);
     std::vector<Value *> args{const1, getCurrentPtr(), const1};
-    builder->CreateCall(module->getFunction("write"), args);
+    builder->CreateCall(write_func, args);
 }
 
 void LLVMVisitor::visitLoopNode(LoopNode *node) {

@@ -138,6 +138,9 @@ int main(int argc, char *argv[]) {
 
     std::cerr << "done\nCompiling to object file... ";
 
+    if (!custom_of) {
+        output_file += ".o";
+    }
     int ret_code = codegen.compile(output_file);
 
     std::cerr << "done\nAll done" << std::endl;

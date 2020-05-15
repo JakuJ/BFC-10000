@@ -1,7 +1,7 @@
 #pragma once
 
-#include <map>
 #include <memory>
+#include <string>
 
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
@@ -19,8 +19,9 @@ class LLVMVisitor : public INodeVisitor {
     std::unique_ptr<IRBuilder<>> builder;
 
     Function *main;
-
-    std::map<std::string, Value *> variables;
+    Type *int_type;
+    Value *index, *tape;
+    FunctionCallee write_func, getchar_func;
 
 public:
     LLVMVisitor();
