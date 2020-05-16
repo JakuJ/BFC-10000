@@ -8,11 +8,11 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/LegacyPassManager.h"
 
-#include "INodeVisitor.hpp"
+#include "NodeVisitor.hpp"
 
 using namespace llvm;
 
-class LLVMVisitor : public INodeVisitor {
+class LLVMVisitor : public NodeVisitor {
     LLVMContext context;
     std::unique_ptr<Module> module;
     std::unique_ptr<legacy::FunctionPassManager> fpm;
@@ -47,6 +47,4 @@ public:
     void visitOutputNode(OutputNode *) override;
 
     void visitLoopNode(LoopNode *) override;
-
-    void visitSequenceNode(SequenceNode *) override;
 };

@@ -19,7 +19,7 @@ void UnreachableLoopPass::visitSequenceNode(SequenceNode *node) {
     std::vector<INode *> folded;
     folded.reserve(node->nodes.size());
 
-    bool lastLoop = true;
+    bool lastLoop = false;
 
     for (auto *n : node->nodes) {
         switch (n->symbol) {

@@ -18,7 +18,11 @@ void InterpretingVisitor::visitAddNode(AddNode *node) {
 }
 
 void InterpretingVisitor::visitSetNode(SetNode *node) {
-    tape[pointer] = node->value;
+    if (node->offset == 0 && node->value == 0) {
+        tape[pointer] = 0;
+    } else {
+        tape[pointer + node->offset] += tape[pointer] * node->value;
+    }
 }
 
 void InterpretingVisitor::visitInputNode([[maybe_unused]] InputNode *node) {
@@ -40,10 +44,3 @@ void InterpretingVisitor::visitLoopNode(LoopNode *node) {
         node->inside->accept(*this);
     }
 }
-
-void InterpretingVisitor::visitSequenceNode(SequenceNode *node) {
-    for (auto *op : node->nodes) {
-        op->accept(*this);
-    }
-}
-

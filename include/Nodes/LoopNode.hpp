@@ -15,7 +15,7 @@ struct LoopNode : public INode {
 
     ~LoopNode() override { delete inside; };
 
-    void accept(INodeVisitor &visitor) override {
+    void accept(NodeVisitor &visitor) override {
         visitor.visitLoopNode(this);
     }
 };

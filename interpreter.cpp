@@ -5,6 +5,10 @@
 #include <AstBuilder.hpp>
 #include <Visitors/InterpretingVisitor.hpp>
 #include <Visitors/Passes/ContractingPass.hpp>
+#include <Visitors/Passes/PassManager.hpp>
+#include <Visitors/Passes/UnreachableLoopPass.hpp>
+#include <Visitors/Passes/SetZeroPass.hpp>
+#include <Visitors/Passes/MultLoopPass.hpp>
 
 extern FILE *yyin;
 extern unsigned int lineNumber;
@@ -29,8 +33,14 @@ int main(int argc, char *argv[]) {
 
     auto ast = builder.getAST();
 
-    ContractingPass folder;
-    ast->accept(folder);
+    PassManager passManager;
+
+    passManager.addPass(new ContractingPass());
+    passManager.addPass(new UnreachableLoopPass());
+    passManager.addPass(new SetZeroPass());
+//    passManager.addPass(new MultLoopPass());
+
+    passManager.runAll(ast.get());
 
     InterpretingVisitor interpreter;
     ast->accept(interpreter);

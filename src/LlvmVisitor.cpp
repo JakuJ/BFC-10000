@@ -35,7 +35,7 @@ LLVMVisitor::LLVMVisitor() {
     // Create a Module
     module = std::make_unique<Module>("BF JIT", context);
 
-    InitializeNativeTarget();
+    LLVMInitializeX86Target();
 
     // Create an IRBuilder
     builder = std::make_unique<IRBuilder<>>(context);
@@ -141,9 +141,21 @@ void LLVMVisitor::visitAddNode(AddNode *node) {
 void LLVMVisitor::visitSetNode(SetNode *node) {
     auto current_ptr = getCurrentPtr();
 
-    auto value = ConstantInt::get(builder->getInt8Ty(), 0);
+    if (node->offset == 0 && node->value == 0) {
+        builder->CreateStore(ConstantInt::get(builder->getInt8Ty(), 0), current_ptr);
+    } else {
+        auto target = builder->CreateInBoundsGEP(current_ptr, ConstantInt::get(int_type, node->offset), "set_target");
 
-    builder->CreateStore(value, current_ptr);
+        if (node->value != 0) {
+            auto current_value = builder->CreateLoad(current_ptr, "current");
+            auto new_value = builder->CreateMul(current_value,
+                                                ConstantInt::get(builder->getInt8Ty(), node->value, true),
+                                                "mult");
+
+            auto target_value = builder->CreateLoad(target);
+            builder->CreateStore(builder->CreateAdd(target_value, new_value), target);
+        }
+    }
 }
 
 void LLVMVisitor::visitInputNode(InputNode *node) {
@@ -204,12 +216,6 @@ void LLVMVisitor::visitLoopNode(LoopNode *node) {
     builder->SetInsertPoint(end);
 }
 
-void LLVMVisitor::visitSequenceNode(SequenceNode *node) {
-    for (auto *op : node->nodes) {
-        op->accept(*this);
-    }
-}
-
 void LLVMVisitor::dumpCode(const std::string &path) {
     std::error_code EC;
     raw_fd_ostream dest(path, EC, sys::fs::OF_None);
@@ -225,7 +231,6 @@ void LLVMVisitor::dumpCode(const std::string &path) {
 int LLVMVisitor::compile(const std::string &path) {
     auto TargetTriple = sys::getDefaultTargetTriple();
 
-    LLVMInitializeX86Target();
     LLVMInitializeX86TargetInfo();
     LLVMInitializeX86TargetMC();
     LLVMInitializeX86AsmPrinter();
@@ -233,9 +238,6 @@ int LLVMVisitor::compile(const std::string &path) {
     std::string Error;
     auto Target = TargetRegistry::lookupTarget(TargetTriple, Error);
 
-    // Print an error and exit if we couldn't find the requested target.
-    // This generally occurs if we've forgotten to initialise the
-    // TargetRegistry or we have a bogus target triple.
     if (!Target) {
         std::cerr << Error;
         return 1;

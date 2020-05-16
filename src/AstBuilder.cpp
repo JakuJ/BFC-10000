@@ -1,7 +1,5 @@
 #include "AstBuilder.hpp"
 
-#include <exception>
-
 #include <Nodes/LoopNode.hpp>
 
 ASTBuilder::ASTBuilder() {
@@ -11,10 +9,10 @@ ASTBuilder::ASTBuilder() {
 
 ASTBuilder::~ASTBuilder() {
     if (!owned) {
-        while (!stack.empty()) {
-            delete stack.top();
+        while (stack.size() > 1) {
             stack.pop();
         }
+        delete stack.top();
     }
 }
 

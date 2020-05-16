@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Visitors/INodeVisitor.hpp"
+#include "Visitors/NodeVisitor.hpp"
 
 struct INode {
     char symbol;
@@ -11,5 +11,5 @@ struct INode {
 
     virtual ~INode() = default;
 
-    virtual void accept(INodeVisitor &) = 0;
+    virtual void accept(NodeVisitor &) = 0;
 };

@@ -3,12 +3,14 @@
 #include <Nodes/INode.hpp>
 
 struct SetNode : public INode {
-    explicit SetNode(int _value) {
+    int offset;
+
+    explicit SetNode(int _offset, int _value) : offset(_offset) {
         symbol = 's';
         value = _value;
     }
 
-    void accept(INodeVisitor &visitor) override {
+    void accept(NodeVisitor &visitor) override {
         visitor.visitSetNode(this);
     }
 };

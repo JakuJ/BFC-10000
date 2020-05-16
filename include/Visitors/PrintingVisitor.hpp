@@ -1,9 +1,9 @@
 #pragma once
 
-#include "INodeVisitor.hpp"
+#include "NodeVisitor.hpp"
 #include <string>
 
-class PrintingVisitor : public INodeVisitor {
+class PrintingVisitor : public NodeVisitor {
     std::ostream *out;
 
 public:
@@ -20,8 +20,6 @@ public:
     void visitOutputNode(OutputNode *node) override;
 
     void visitLoopNode(LoopNode *node) override;
-
-    void visitSequenceNode(SequenceNode *node) override;
 
     void visitSetNode(SetNode *node) override;
 };

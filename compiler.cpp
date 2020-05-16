@@ -10,16 +10,17 @@
 #include <Visitors/Passes/SetZeroPass.hpp>
 #include <Visitors/Passes/UnreachableLoopPass.hpp>
 #include <Visitors/Passes/PassManager.hpp>
+#include <Visitors/Passes/MultLoopPass.hpp>
 
 extern FILE *yyin;
 extern unsigned int lineNumber;
 extern ASTBuilder builder;
 
 void usage() {
-    std::cerr << "Usage: compiler [-hvbOS] [-o <output file>] <source file>" << std::endl;
+    std::cerr << "Usage: compiler [-hvAOS] [-o <output file>] <source file>" << std::endl;
     std::cerr << "\t-h\t Print this help" << std::endl;
-    std::cerr << "\t-v\t Verbose output about optimization passes" << std::endl;
-    std::cerr << "\t-b\t Emit optimized Brainfuck IR" << std::endl;
+    std::cerr << "\t-v\t Verbose mode, print optimization passes' stats" << std::endl;
+    std::cerr << "\t-A\t Emit the optimized AST (for debugging purposes)" << std::endl;
     std::cerr << "\t-S\t Emit LLVM IR" << std::endl;
     std::cerr << "\t-O\t Optimize LLVM IR" << std::endl;
 }
@@ -40,17 +41,17 @@ std::string remove_extension(const char *path) {
 }
 
 int main(int argc, char *argv[]) {
-    bool emit_llvm = false, emit_bf_ir = false, optimize = false, verbose = false;
+    bool emit_llvm = false, emit_ast = false, optimize = false, verbose = false;
 
     std::string output_file;
     bool custom_of = false;
 
     int opt;
 
-    while ((opt = getopt(argc, argv, "hvbOSo:")) != -1) {
+    while ((opt = getopt(argc, argv, "hvAOSo:")) != -1) {
         switch (opt) {
-            case 'b':
-                emit_bf_ir = true;
+            case 'A':
+                emit_ast = true;
                 break;
             case 'v':
                 verbose = true;
@@ -105,6 +106,7 @@ int main(int argc, char *argv[]) {
     passManager.addPass(new ContractingPass());
     passManager.addPass(new UnreachableLoopPass());
     passManager.addPass(new SetZeroPass());
+//    passManager.addPass(new MultLoopPass());
 
     passManager.runAll(ast.get());
 
@@ -113,7 +115,7 @@ int main(int argc, char *argv[]) {
         passManager.dumpStats();
     }
 
-    if (emit_bf_ir) {
+    if (emit_ast) {
         std::cerr << "done\nDumping BF IR... ";
 
         if (!custom_of) {

@@ -8,7 +8,7 @@ struct MoveNode : public INode {
         symbol = '>';
     }
 
-    void accept(INodeVisitor &visitor) override {
+    void accept(NodeVisitor &visitor) override {
         visitor.visitMoveNode(this);
     }
 };

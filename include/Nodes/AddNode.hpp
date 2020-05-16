@@ -8,7 +8,7 @@ struct AddNode : public INode {
         symbol = '+';
     }
 
-    void accept(INodeVisitor &visitor) override {
+    void accept(NodeVisitor &visitor) override {
         visitor.visitAddNode(this);
     }
 };

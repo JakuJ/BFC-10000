@@ -8,7 +8,7 @@ public:
         symbol = '.';
     }
 
-    void accept(INodeVisitor &visitor) override {
+    void accept(NodeVisitor &visitor) override {
         visitor.visitOutputNode(this);
     }
 };

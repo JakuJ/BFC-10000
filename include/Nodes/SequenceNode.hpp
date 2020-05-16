@@ -13,7 +13,7 @@ struct SequenceNode : public INode {
         }
     };
 
-    void accept(INodeVisitor &visitor) override {
+    void accept(NodeVisitor &visitor) override {
         visitor.visitSequenceNode(this);
     };
 };

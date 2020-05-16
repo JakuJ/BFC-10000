@@ -31,7 +31,9 @@ ASTBuilder builder;
 
 ROOT    : STRING ;
 
-STRING  : STRING OP | %empty ;
+NONEMPTY: STRING OP;
+
+STRING  : STRING OP | %empty;
 
 OP      : NEWLINE   { ++lineNumber; }
         | LEFT      { builder.addOperation(new MoveNode(-1)); }
@@ -43,6 +45,6 @@ OP      : NEWLINE   { ++lineNumber; }
         | LOOP
         ;
 
-LOOP    : OPEN { builder.beginLoop(); } STRING CLOSE { builder.endLoop(); }
+LOOP    : OPEN { builder.beginLoop(); } NONEMPTY CLOSE { builder.endLoop(); }
 
 %%

@@ -26,7 +26,7 @@ void SetZeroPass::visitSequenceNode(SequenceNode *node) {
             case '[': {
                 const auto &loop_nodes = dynamic_cast<LoopNode *>(n)->inside->nodes;
                 if (loop_nodes.size() == 1 && loop_nodes[0]->symbol == '+') {
-                    auto setNode = new SetNode(0);
+                    auto setNode = new SetNode(0, 0);
                     folded.push_back(setNode);
                     hits++;
                     delete n;

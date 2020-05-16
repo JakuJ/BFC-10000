@@ -1,9 +1,9 @@
 #pragma once
 
 #include <vector>
-#include "INodeVisitor.hpp"
+#include "NodeVisitor.hpp"
 
-class InterpretingVisitor : public INodeVisitor {
+class InterpretingVisitor : public NodeVisitor {
 
     std::vector<int> tape;
     int pointer = 0;
@@ -22,6 +22,4 @@ public:
     void visitOutputNode(OutputNode *node) override;
 
     void visitLoopNode(LoopNode *node) override;
-
-    void visitSequenceNode(SequenceNode *node) override;
 };

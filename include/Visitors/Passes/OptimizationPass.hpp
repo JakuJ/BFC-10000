@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Visitors/INodeVisitor.hpp>
+#include <Visitors/NodeVisitor.hpp>
 
-class OptimizationPass : public INodeVisitor {
+class OptimizationPass : public NodeVisitor {
 protected:
     int hits = 0;
 

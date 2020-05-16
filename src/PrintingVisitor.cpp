@@ -25,7 +25,7 @@ void PrintingVisitor::visitAddNode(AddNode *node) {
 }
 
 void PrintingVisitor::visitSetNode(SetNode *node) {
-    *out << "Set to " << node->value << std::endl;
+    *out << "Set at " << node->offset << " to " << node->value << std::endl;
 }
 
 void PrintingVisitor::visitInputNode(InputNode *node) {
@@ -40,10 +40,4 @@ void PrintingVisitor::visitLoopNode(LoopNode *node) {
     *out << "In loop:" << std::endl;
     node->inside->accept(*this);
     *out << "End loop" << std::endl;
-}
-
-void PrintingVisitor::visitSequenceNode(SequenceNode *node) {
-    for (auto *n : node->nodes) {
-        n->accept(*this);
-    }
 }

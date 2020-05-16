@@ -14,7 +14,7 @@ struct LoopNode;
 
 struct SequenceNode;
 
-struct INodeVisitor {
+struct NodeVisitor {
     virtual void visitMoveNode(MoveNode *) {}
 
     virtual void visitAddNode(AddNode *) {}
@@ -27,5 +27,5 @@ struct INodeVisitor {
 
     virtual void visitLoopNode(LoopNode *) {}
 
-    virtual void visitSequenceNode(SequenceNode *) {}
+    virtual void visitSequenceNode(SequenceNode *node);
 };
