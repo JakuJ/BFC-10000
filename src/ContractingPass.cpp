@@ -38,17 +38,8 @@ void ContractingPass::visitSequenceNode(SequenceNode *node) {
                 lastNode = n;
                 break;
             case '+':
-                if (lastNode->symbol == '+') {
-                    lastNode->value += n->value;
-                    hits++;
-                    delete n;
-                } else {
-                    folded.push_back(n);
-                    lastNode = n;
-                }
-                break;
             case '>':
-                if (lastNode->symbol == '>') {
+                if (lastNode->symbol == n->symbol) {
                     lastNode->value += n->value;
                     hits++;
                     delete n;
