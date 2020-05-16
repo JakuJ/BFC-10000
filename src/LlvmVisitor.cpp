@@ -82,9 +82,6 @@ LLVMVisitor::LLVMVisitor() {
     BasicBlock *BB = BasicBlock::Create(context, "entry", main);
     builder->SetInsertPoint(BB);
 
-    // Create global variables
-    builder->CreateGlobalString("%c", "format");
-
     // Create a named stack variable - an i64 index
     index = builder->CreateAlloca(builder->getInt64Ty(), nullptr, "index");
     builder->CreateStore(ConstantInt::get(builder->getInt64Ty(), 0), index);
