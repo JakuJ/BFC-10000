@@ -1,7 +1,7 @@
 #include "Visitors/Passes/MultLoopPass.hpp"
 
 #include <iostream>
-#include <map>
+#include <unordered_map>
 
 #include <Nodes/LoopNode.hpp>
 #include <Nodes/SetNode.hpp>
@@ -16,24 +16,27 @@ void MultLoopPass::visitLoopNode(LoopNode *node) {
 
 std::optional<std::vector<SetNode *>> MultLoopPass::trySimplify(const std::vector<INode *> &body) {
 
-    bool condition = body[0]->symbol == '+' &&
-                     body[0]->value == -1 &&
-                     body[1]->symbol == '>';
+    bool condition = body[0]->symbol == '+' && body[0]->value == -1;
 
     if (!condition) {
         return std::nullopt;
     }
 
-    std::map<char, std::map<char, char>> machine{
-            {'S', {{'>', 'M'}}},
-            {'M', {{'>', 'M'}, {'+', 'A'}}},
-            {'A', {{'+', 'A'}, {'>', 'E'}}},
-            {'E', {{'>', 'M'}, {'+', 'A'}}}
+    std::unordered_map<char, std::unordered_map<char, char>> machine{
+            {'B', {{'>', 'C'}}},
+            {'C', {{'>', 'D'}, {'+', 'E'}}},
+            {'D', {{'>', 'D'}, {'+', 'E'}}},
+            {'E', {{'>', 'F'}, {'+', 'G'}}},
+            {'G', {{'>', 'F'}, {'+', 'G'}}},
+            {'F', {{'>', 'H'}, {'+', 'I'}}},
+            {'H', {{'>', 'H'}, {'+', 'I'}}},
+            {'I', {{'>', 'F'}, {'+', 'J'}}},
+            {'J', {{'>', 'F'}, {'+', 'J'}}}
     };
 
     std::vector<SetNode *> ret;
     int offset = 0, mult = 0;
-    char state = 'S';
+    char state = 'B';
 
     for (int i = 1; i < body.size(); i++) {
         char action = body[i]->symbol;
@@ -44,24 +47,19 @@ std::optional<std::vector<SetNode *>> MultLoopPass::trySimplify(const std::vecto
             state = machine[state][action];
         }
 
-        switch (state) {
-            case 'M':
-                offset += body[i]->value;
-                break;
-            case 'A':
-                mult += body[i]->value;
-                break;
-            case 'E':
-                ret.push_back(new SetNode(offset, mult));
-                offset += body[i]->value;
-                mult = 0;
-                break;
-            default:
-                break;
+        if (state == 'F') {
+            ret.push_back(new SetNode(offset, mult));
+            mult = 0;
+        }
+
+        if (action == '+') {
+            mult += body[i]->value;
+        } else if (action == '>') {
+            offset += body[i]->value;
         }
     }
 
-    if ((state == 'E' || state == 'M') && offset == 0) {
+    if ((state == 'F' || state == 'H') && offset == 0) {
         ret.push_back(new SetNode(0, 0));
         return std::optional(ret);
     }
@@ -82,26 +80,22 @@ void MultLoopPass::visitSequenceNode(SequenceNode *node) {
     folded.reserve(node->nodes.size());
 
     for (auto *n : node->nodes) {
-        switch (n->symbol) {
-            case '[': {
-                auto inside = dynamic_cast<LoopNode *>(n)->inside->nodes;
-                auto optRed = trySimplify(inside);
-                if (optRed.has_value()) {
-                    folded.insert(folded.end(), optRed->begin(), optRed->end());
-                    hits++;
-                    delete n;
-                } else {
-                    n->accept(*this);
-                    folded.push_back(n);
+        if (n->symbol == '[') {
+            auto &inside = dynamic_cast<LoopNode *>(n)->inside->nodes;
+            auto optRed = trySimplify(inside);
+            if (optRed.has_value()) {
+                for (auto *d : inside) {
+                    delete d;
                 }
-                break;
+                inside.clear();
+                inside.insert(inside.end(), optRed->begin(), optRed->end());
+                hits++;
+            } else {
+                n->accept(*this);
             }
-            default:
-                folded.push_back(n);
-                break;
         }
+        folded.push_back(n);
     }
 
     node->nodes = folded;
 }
-

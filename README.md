@@ -62,8 +62,6 @@ tape[index - 2] -= 3 * tape[index];
 tape[index] = 0;
 ```
 
-This optimization is work in progress and currently disabled.
-
 # Example sources
 
 [A Mandelbrot set viewer](https://raw.githubusercontent.com/sci4me/JBFJit/master/progs/mand.bf) by Erik Bosman

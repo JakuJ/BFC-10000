@@ -7,7 +7,7 @@
 #include <Nodes/LoopNode.hpp>
 #include <Nodes/SetNode.hpp>
 
-InterpretingVisitor::InterpretingVisitor() : tape(30000, 0), pointer(0) {}
+InterpretingVisitor::InterpretingVisitor() : tape(65535, 0), pointer(0) {}
 
 void InterpretingVisitor::visitMoveNode(MoveNode *node) {
     pointer += node->value;

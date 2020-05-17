@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     passManager.addPass(new ContractingPass());
     passManager.addPass(new UnreachableLoopPass());
     passManager.addPass(new SetZeroPass());
-//    passManager.addPass(new MultLoopPass());
+    passManager.addPass(new MultLoopPass());
 
     passManager.runAll(ast.get());
 
