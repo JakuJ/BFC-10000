@@ -16,28 +16,49 @@ PrintingVisitor::~PrintingVisitor() {
     delete out;
 }
 
+void PrintingVisitor::indent() {
+    for (int i = 0; i < loopDepth; i++) {
+        *out << "  ";
+    }
+}
+
 void PrintingVisitor::visitMoveNode(MoveNode *node) {
-    *out << "Move " << node->value << std::endl;
+    indent();
+    *out << "Move " << abs(node->value) << " cells to the " << (node->value >= 0 ? "right" : "left") << std::endl;
 }
 
 void PrintingVisitor::visitAddNode(AddNode *node) {
-    *out << "Add " << node->value << std::endl;
+    indent();
+    *out << "Add " << node->value << " to current cell" << std::endl;
 }
 
 void PrintingVisitor::visitSetNode(SetNode *node) {
-    *out << "Set at " << node->offset << " to " << node->value << std::endl;
+    indent();
+    if (node->offset == 0 && node->value == 0) {
+        *out << "Clear current cell" << std::endl;
+    } else {
+        *out << "Add <current cell value> * " << node->value << " to cell at offset " << node->offset << std::endl;
+    }
 }
 
 void PrintingVisitor::visitInputNode(InputNode *node) {
-    *out << "Read" << std::endl;
+    indent();
+    *out << "Read user input" << std::endl;
 }
 
 void PrintingVisitor::visitOutputNode(OutputNode *node) {
-    *out << "Print" << std::endl;
+    indent();
+    *out << "Print current cell" << std::endl;
 }
 
 void PrintingVisitor::visitLoopNode(LoopNode *node) {
+    indent();
     *out << "In loop:" << std::endl;
+
+    loopDepth++;
     node->inside->accept(*this);
+    loopDepth--;
+
+    indent();
     *out << "End loop" << std::endl;
 }

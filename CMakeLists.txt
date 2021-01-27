@@ -4,8 +4,7 @@ project(Compiler)
 set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-I/usr/local/opt/flex/include")
-
-set(CMAKE_CXX_FLAGS "-Wall -O3")
+set(CMAKE_CXX_FLAGS "-Wall -O3 -march=native")
 
 # FLEX and BISON
 
@@ -55,7 +54,7 @@ add_executable(
         ${BISON_parser_OUTPUTS}
         ${FLEX_scanner_OUTPUTS})
 
-llvm_map_components_to_libnames(llvm_libs support core passes x86asmparser x86codegen x86utils)
+llvm_map_components_to_libnames(llvm_libs support core passes x86asmparser x86codegen)
 
 # Link against LLVM libraries
 target_link_libraries(compiler ${llvm_libs})

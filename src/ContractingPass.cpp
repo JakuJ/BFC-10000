@@ -3,11 +3,12 @@
 #include <iostream>
 
 #include <Nodes/SequenceNode.hpp>
+#include <Nodes/MoveNode.hpp>
 #include <Nodes/LoopNode.hpp>
 #include <Nodes/AddNode.hpp>
 
 void ContractingPass::dumpStats() const {
-    std::cerr << "Contractions performed: " << hits << std::endl;
+    std::cerr << "Folded instructions: " << hits << std::endl;
 }
 
 void ContractingPass::visitLoopNode(LoopNode *node) {
@@ -19,41 +20,56 @@ void ContractingPass::visitSequenceNode(SequenceNode *node) {
         return;
     }
 
-    std::vector<INode *> folded;
+    // Allocate space for the new sequence
+    std::vector < INode * > folded;
     folded.reserve(node->nodes.size());
 
-    INode *lastNode = node->nodes.front();
-    folded.push_back(lastNode);
+    // Initialize add/move counters
+    int foldedValue = 0;
+    char foldedSymbol = '+';
 
-    // special case - optimize if loop
-    lastNode->accept(*this);
+    // Add the Move/Add node when folding is done
+    auto endFold = [&]() {
+        if (foldedValue != 0) {
+            if (foldedSymbol == '>') {
+                folded.push_back(new MoveNode(foldedValue));
+            } else if (foldedSymbol == '+') {
+                folded.push_back(new AddNode(foldedValue));
+            }
+        }
 
-    for (int i = 1; i < node->nodes.size(); i++) {
-        INode *n = node->nodes[i];
+        // Start new fold
+        foldedValue = 0;
+    };
 
+    for (INode *n : node->nodes) {
         switch (n->symbol) {
             case '[':
+                endFold();
                 n->accept(*this);
                 folded.push_back(n);
-                lastNode = n;
                 break;
             case '+':
             case '>':
-                if (lastNode->symbol == n->symbol) {
-                    lastNode->value += n->value;
+                if (n->symbol == foldedSymbol) {
+                    foldedValue += n->value;
                     hits++;
                     delete n;
                 } else {
-                    folded.push_back(n);
-                    lastNode = n;
+                    endFold();
+                    foldedSymbol = n->symbol;
+                    foldedValue = n->value;
                 }
                 break;
             default:
+                endFold();
                 folded.push_back(n);
-                lastNode = n;
                 break;
         }
     }
+
+    // Sequence might end with a fold
+    endFold();
 
     node->nodes = folded;
 }

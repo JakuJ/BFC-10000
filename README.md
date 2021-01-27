@@ -41,25 +41,35 @@ The compiler creates object files which have to be linked in order to create an 
 
 # Optimizations
 
-A range of optimization are employed in order to simplify the code and significantly reduce the number of operations required:
+A range of optimization are employed in order to simplify the code and significantly reduce the number of operations required.
+The following examples use C-like pseudocode.
 
-Contracting adjacent instructions: `+++>>-----++--` becomes:
+1. Adjacent `move` and `add` instructions are folded
+   
+Before: `+++>>-----++--`
+
+After:
 ```c
 tape[index] += 3;
 index += 2;
 tape[index] -= 5;
 ```
 
-The `[-]` loop, a common idiom used for clearing the cell, is simplified to `tape[index] = 0`.
+2. The `[-]` loop, a common idiom used for clearing the cell, is simplified to `tape[index] = 0`.
 
-Unreachable loops (such that occur immediately after another loop) are eliminated.
+3. Unreachable loops (such that occur immediately after another loop) are eliminated.
 
-Multiplication loops are simplified to a few copying operations: `[->++<<<--->>]` becomes:
+4. Multiplication loops are simplified to a few addition operations
+   
+Before: `[->++<<<--->>]`
 
+After:
 ```c
-tape[index + 1] += 2 * tape[index];
-tape[index - 2] -= 3 * tape[index];
-tape[index] = 0;
+while (tape[index] != 0) {
+    tape[index + 1] += 2 * tape[index];
+    tape[index - 2] -= 3 * tape[index];
+    tape[index] = 0; // loop executes at most once
+}
 ```
 
 # Example sources
@@ -70,7 +80,13 @@ tape[index] = 0;
 A rich collection of BF programs.
 
 [Towers of Hanoi](http://www.clifford.at/bfcpu/hanoi.html) by Clifford Wolf<br>
-This one comes with a nice ASCII visuals, but your terminal must be able to understand vt100 escape codes. Also, use the interpreter, and not the compiler - the compiled version is way too fast for the animation. Ifit's still too fast, you might want to disable some AST optimizations in `interpreter.cpp`.
+This one comes with a nice ASCII visuals, but your terminal must be able to understand vt100 escape codes.
+
+Use the interpreter, not the compiler - the compiled version is waaaaay too fast for the animation.
+If it's still too fast, you might want to comment out some AST optimizations in `interpreter.cpp`.
 
 [Lost Kingdom](https://jonripley.com/i-fiction/games/LostKingdomBF.html) by Jon Ripley<br>
-A text adventure game written in nearly 30k lines of BF code. You might want to turn off LLVM IR optimizations for this one (compile without the `-O` flag). Even then the compilation might take a few minutes.
+A text adventure game written in nearly 30k lines of BF code.
+
+You might want to turn off LLVM IR optimizations for this one (compile without the `-O` flag). 
+Even then the compilation might take a few minutes, mostly spent in the last step (making an object file). 

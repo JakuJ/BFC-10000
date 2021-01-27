@@ -5,6 +5,9 @@
 
 class PrintingVisitor : public NodeVisitor {
     std::ostream *out;
+    int loopDepth;
+
+    void indent();
 
 public:
     explicit PrintingVisitor(const std::string &);
