@@ -2,7 +2,7 @@
 
 #include "Visitors/Passes/OptimizationPass.hpp"
 
-class ContractingPass : public OptimizationPass {
+class FoldingPass : public OptimizationPass {
     void visitLoopNode(LoopNode *node) override;
 
     void visitSequenceNode(SequenceNode *node) override;

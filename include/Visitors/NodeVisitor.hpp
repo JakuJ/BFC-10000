@@ -4,7 +4,7 @@ struct MoveNode;
 
 struct AddNode;
 
-struct SetNode;
+struct AddMultipleNode;
 
 class InputNode;
 
@@ -19,7 +19,7 @@ struct NodeVisitor {
 
     virtual void visitAddNode(AddNode *) {}
 
-    virtual void visitSetNode(SetNode *) {}
+    virtual void visitSetNode(AddMultipleNode *) {}
 
     virtual void visitInputNode(InputNode *) {}
 

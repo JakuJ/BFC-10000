@@ -15,7 +15,7 @@ public:
 
     void visitAddNode(AddNode *node) override;
 
-    void visitSetNode(SetNode *node) override;
+    void visitSetNode(AddMultipleNode *node) override;
 
     void visitInputNode(InputNode *node) override;
 

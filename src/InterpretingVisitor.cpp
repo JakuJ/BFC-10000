@@ -5,7 +5,7 @@
 #include <Nodes/MoveNode.hpp>
 #include <Nodes/AddNode.hpp>
 #include <Nodes/LoopNode.hpp>
-#include <Nodes/SetNode.hpp>
+#include <Nodes/AddMultipleNode.hpp>
 
 InterpretingVisitor::InterpretingVisitor() : tape(65535, 0), pointer(0) {}
 
@@ -17,7 +17,7 @@ void InterpretingVisitor::visitAddNode(AddNode *node) {
     tape[pointer] += node->value;
 }
 
-void InterpretingVisitor::visitSetNode(SetNode *node) {
+void InterpretingVisitor::visitSetNode(AddMultipleNode *node) {
     if (node->offset == 0 && node->value == 0) {
         tape[pointer] = 0;
     } else {
@@ -36,7 +36,7 @@ void InterpretingVisitor::visitInputNode([[maybe_unused]] InputNode *node) {
 }
 
 void InterpretingVisitor::visitOutputNode([[maybe_unused]] OutputNode *node) {
-    std::cout << static_cast<char>(tape[pointer]) << std::flush;
+    std::cout << static_cast<char>(tape[pointer]);
 }
 
 void InterpretingVisitor::visitLoopNode(LoopNode *node) {

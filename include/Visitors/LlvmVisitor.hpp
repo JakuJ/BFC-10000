@@ -40,7 +40,7 @@ public:
 
     void visitAddNode(AddNode *) override;
 
-    void visitSetNode(SetNode *node) override;
+    void visitSetNode(AddMultipleNode *node) override;
 
     void visitInputNode(InputNode *) override;
 

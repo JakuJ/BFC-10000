@@ -6,7 +6,7 @@
 #include <Nodes/MoveNode.hpp>
 #include <Nodes/LoopNode.hpp>
 #include <Nodes/AddNode.hpp>
-#include <Nodes/SetNode.hpp>
+#include <Nodes/AddMultipleNode.hpp>
 
 PrintingVisitor::PrintingVisitor(const std::string &path) {
     out = new std::ofstream(path);
@@ -32,7 +32,7 @@ void PrintingVisitor::visitAddNode(AddNode *node) {
     *out << "Add " << node->value << " to current cell" << std::endl;
 }
 
-void PrintingVisitor::visitSetNode(SetNode *node) {
+void PrintingVisitor::visitSetNode(AddMultipleNode *node) {
     indent();
     if (node->offset == 0 && node->value == 0) {
         *out << "Clear current cell" << std::endl;

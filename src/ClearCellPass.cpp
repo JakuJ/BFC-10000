@@ -1,19 +1,19 @@
-#include "Visitors/Passes/SetZeroPass.hpp"
+#include "Visitors/Passes/ClearCellPass.hpp"
 
 #include <iostream>
 
 #include <Nodes/LoopNode.hpp>
-#include <Nodes/SetNode.hpp>
+#include <Nodes/AddMultipleNode.hpp>
 
-void SetZeroPass::dumpStats() const {
+void ClearCellPass::dumpStats() const {
     std::cerr << "Cell clearing loops simplified: " << hits << std::endl;
 }
 
-void SetZeroPass::visitLoopNode(LoopNode *node) {
+void ClearCellPass::visitLoopNode(LoopNode *node) {
     node->inside->accept(*this);
 }
 
-void SetZeroPass::visitSequenceNode(SequenceNode *node) {
+void ClearCellPass::visitSequenceNode(SequenceNode *node) {
     if (node->nodes.empty()) {
         return;
     }
@@ -26,7 +26,7 @@ void SetZeroPass::visitSequenceNode(SequenceNode *node) {
             case '[': {
                 const auto &loop_nodes = dynamic_cast<LoopNode *>(n)->inside->nodes;
                 if (loop_nodes.size() == 1 && loop_nodes[0]->symbol == '+') {
-                    auto setNode = new SetNode(0, 0);
+                    auto setNode = new AddMultipleNode(0, 0);
                     folded.push_back(setNode);
                     hits++;
                     delete n;

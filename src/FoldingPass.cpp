@@ -1,4 +1,4 @@
-#include "Visitors/Passes/ContractingPass.hpp"
+#include "Visitors/Passes/FoldingPass.hpp"
 
 #include <iostream>
 
@@ -7,15 +7,15 @@
 #include <Nodes/LoopNode.hpp>
 #include <Nodes/AddNode.hpp>
 
-void ContractingPass::dumpStats() const {
+void FoldingPass::dumpStats() const {
     std::cerr << "Folded instructions: " << hits << std::endl;
 }
 
-void ContractingPass::visitLoopNode(LoopNode *node) {
+void FoldingPass::visitLoopNode(LoopNode *node) {
     node->inside->accept(*this);
 }
 
-void ContractingPass::visitSequenceNode(SequenceNode *node) {
+void FoldingPass::visitSequenceNode(SequenceNode *node) {
     if (node->nodes.empty()) {
         return;
     }

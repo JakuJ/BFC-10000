@@ -1,20 +1,20 @@
-#include "Visitors/Passes/MultLoopPass.hpp"
+#include "Visitors/Passes/MultiplicationLoopPass.hpp"
 
 #include <iostream>
 #include <unordered_map>
 
 #include <Nodes/LoopNode.hpp>
-#include <Nodes/SetNode.hpp>
+#include <Nodes/AddMultipleNode.hpp>
 
-void MultLoopPass::dumpStats() const {
+void MultiplicationLoopPass::dumpStats() const {
     std::cerr << "Multiplication loops simplified: " << hits << std::endl;
 }
 
-void MultLoopPass::visitLoopNode(LoopNode *node) {
+void MultiplicationLoopPass::visitLoopNode(LoopNode *node) {
     node->inside->accept(*this);
 }
 
-std::optional<std::vector<SetNode *>> MultLoopPass::trySimplify(const std::vector<INode *> &body) {
+std::optional <std::vector<AddMultipleNode *>> MultiplicationLoopPass::trySimplify(const std::vector<INode *> &body) {
 
     bool condition = body[0]->symbol == '+' && body[0]->value == -1;
 
@@ -34,7 +34,7 @@ std::optional<std::vector<SetNode *>> MultLoopPass::trySimplify(const std::vecto
             {'J', {{'>', 'F'}, {'+', 'J'}}}
     };
 
-    std::vector<SetNode *> ret;
+    std::vector < AddMultipleNode * > ret;
     int offset = 0, mult = 0;
     char state = 'B';
 
@@ -48,7 +48,7 @@ std::optional<std::vector<SetNode *>> MultLoopPass::trySimplify(const std::vecto
         }
 
         if (state == 'F') {
-            ret.push_back(new SetNode(offset, mult));
+            ret.push_back(new AddMultipleNode(offset, mult));
             mult = 0;
         }
 
@@ -60,7 +60,7 @@ std::optional<std::vector<SetNode *>> MultLoopPass::trySimplify(const std::vecto
     }
 
     if ((state == 'F' || state == 'H') && offset == 0) {
-        ret.push_back(new SetNode(0, 0));
+        ret.push_back(new AddMultipleNode(0, 0));
         return std::optional(ret);
     }
 
@@ -71,12 +71,12 @@ std::optional<std::vector<SetNode *>> MultLoopPass::trySimplify(const std::vecto
     return std::nullopt;
 }
 
-void MultLoopPass::visitSequenceNode(SequenceNode *node) {
+void MultiplicationLoopPass::visitSequenceNode(SequenceNode *node) {
     if (node->nodes.empty()) {
         return;
     }
 
-    std::vector<INode *> folded;
+    std::vector < INode * > folded;
     folded.reserve(node->nodes.size());
 
     for (auto *n : node->nodes) {

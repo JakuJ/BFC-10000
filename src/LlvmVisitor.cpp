@@ -25,7 +25,7 @@
 #include <Nodes/MoveNode.hpp>
 #include <Nodes/LoopNode.hpp>
 #include <Nodes/AddNode.hpp>
-#include <Nodes/SetNode.hpp>
+#include <Nodes/AddMultipleNode.hpp>
 
 #define ZERO_EOF 1
 
@@ -135,7 +135,7 @@ void LLVMVisitor::visitAddNode(AddNode *node) {
     builder->CreateStore(next, current_ptr);
 }
 
-void LLVMVisitor::visitSetNode(SetNode *node) {
+void LLVMVisitor::visitSetNode(AddMultipleNode *node) {
     auto current_ptr = getCurrentPtr();
 
     if (node->offset == 0 && node->value == 0) {

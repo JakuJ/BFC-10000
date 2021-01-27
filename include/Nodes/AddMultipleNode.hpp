@@ -2,10 +2,10 @@
 
 #include <Nodes/INode.hpp>
 
-struct SetNode : public INode {
+struct AddMultipleNode : public INode {
     int offset;
 
-    explicit SetNode(int _offset, int _value) : offset(_offset) {
+    explicit AddMultipleNode(int _offset, int _value) : offset(_offset) {
         symbol = 's';
         value = _value;
     }

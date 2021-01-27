@@ -4,11 +4,11 @@
 #include <parser.hpp>
 #include <AstBuilder.hpp>
 #include <Visitors/InterpretingVisitor.hpp>
-#include <Visitors/Passes/ContractingPass.hpp>
+#include <Visitors/Passes/FoldingPass.hpp>
 #include <Visitors/Passes/PassManager.hpp>
 #include <Visitors/Passes/UnreachableLoopPass.hpp>
-#include <Visitors/Passes/SetZeroPass.hpp>
-#include <Visitors/Passes/MultLoopPass.hpp>
+#include <Visitors/Passes/ClearCellPass.hpp>
+#include <Visitors/Passes/MultiplicationLoopPass.hpp>
 
 // FLEX/BISON externals
 extern FILE *yyin;
@@ -39,10 +39,10 @@ int main(int argc, char *argv[]) {
 
     PassManager passManager;
 
-    passManager.addPass(new ContractingPass());
+    passManager.addPass(new FoldingPass());
     passManager.addPass(new UnreachableLoopPass());
-    passManager.addPass(new SetZeroPass());
-    passManager.addPass(new MultLoopPass());
+    passManager.addPass(new ClearCellPass());
+    passManager.addPass(new MultiplicationLoopPass());
 
     passManager.runAll(ast.get());
 

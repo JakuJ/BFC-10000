@@ -89,4 +89,4 @@ If it's still too fast, you might want to comment out some AST optimizations in 
 A text adventure game written in nearly 30k lines of BF code.
 
 You might want to turn off LLVM IR optimizations for this one (compile without the `-O` flag). 
-Even then the compilation might take a few minutes, mostly spent in the last step (making an object file). 
+Even then the compilation might take a few minutes, mostly spent in the last step (making an object file).
