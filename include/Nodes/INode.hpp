@@ -2,6 +2,7 @@
 
 #include "Visitors/NodeVisitor.hpp"
 
+// Abstract base class for all AST nodes
 struct INode {
     char symbol;
 

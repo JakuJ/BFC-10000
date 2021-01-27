@@ -12,6 +12,7 @@
 #include <Visitors/Passes/PassManager.hpp>
 #include <Visitors/Passes/MultLoopPass.hpp>
 
+// FLEX/BISON externals
 extern FILE *yyin;
 extern unsigned int lineNumber;
 extern ASTBuilder builder;
@@ -25,6 +26,7 @@ void usage() {
     std::cerr << "\t-O\t Optimize LLVM IR" << std::endl;
 }
 
+// Removes extension from a file path
 std::string remove_extension(const char *path) {
     auto filename = std::string(path);
 
@@ -41,13 +43,11 @@ std::string remove_extension(const char *path) {
 }
 
 int main(int argc, char *argv[]) {
-    bool emit_llvm = false, emit_ast = false, optimize = false, verbose = false;
-
+    bool emit_llvm = false, emit_ast = false, optimize = false, verbose = false, custom_of = false;
     std::string output_file;
-    bool custom_of = false;
 
+    // Parse program arguments
     int opt;
-
     while ((opt = getopt(argc, argv, "hvAOSo:")) != -1) {
         switch (opt) {
             case 'A':
@@ -79,9 +79,12 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // Parse source file path
     const char *source_file;
     if (optind < argc) {
         source_file = argv[optind];
+
+        // If no custom output file specified, save to this name with different extension
         if (!custom_of) {
             output_file = remove_extension(source_file);
         }
@@ -90,6 +93,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    // Parse source
     std::cerr << "Parsing source code... ";
 
     yyin = fopen(source_file, "r");
@@ -99,6 +103,7 @@ int main(int argc, char *argv[]) {
 
     std::cerr << lineNumber << " lines done\nOptimizing AST... ";
 
+    // Run optimization passes
     auto ast = builder.getAST();
 
     PassManager passManager;
@@ -110,11 +115,13 @@ int main(int argc, char *argv[]) {
 
     passManager.runAll(ast.get());
 
+    // Optional: dump optimization statistics
     if (verbose) {
         std::cerr << std::endl;
         passManager.dumpStats();
     }
 
+    // Optional: dump Brainfuck IR
     if (emit_ast) {
         std::cerr << "done\nDumping BF IR... ";
 
@@ -129,6 +136,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
+    // Compile to LLVM IR
     std::cerr << "done\nGenerating LLVM IR code... ";
 
     LLVMVisitor codegen;
@@ -136,11 +144,13 @@ int main(int argc, char *argv[]) {
 
     codegen.finalize();
 
+    // Optional: Run LLVM optimizations
     if (optimize) {
         std::cerr << "done\nOptimizing IR... ";
         codegen.optimize();
     }
 
+    // Optional: dump LLVM IR
     if (emit_llvm) {
         std::cerr << "done\nDumping LLVM IR... ";
         if (!custom_of) {
@@ -151,6 +161,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
+    // Compile to binary
     std::cerr << "done\nCompiling to object file... ";
 
     if (!custom_of) {

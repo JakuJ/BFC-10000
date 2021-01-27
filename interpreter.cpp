@@ -10,6 +10,7 @@
 #include <Visitors/Passes/SetZeroPass.hpp>
 #include <Visitors/Passes/MultLoopPass.hpp>
 
+// FLEX/BISON externals
 extern FILE *yyin;
 extern unsigned int lineNumber;
 extern ASTBuilder builder;
@@ -19,11 +20,13 @@ void usage() {
 }
 
 int main(int argc, char *argv[]) {
+    // Parse program arguments
     if (argc != 2) {
         usage();
         return EXIT_FAILURE;
     }
 
+    // Parse source file
     yyin = fopen(argv[1], "r");
     if (yyparse()) {
         return EXIT_FAILURE;
@@ -31,6 +34,7 @@ int main(int argc, char *argv[]) {
 
     std::cerr << "Parsed " << lineNumber << " lines of Brainfuck" << std::endl;
 
+    // Run optimization passes
     auto ast = builder.getAST();
 
     PassManager passManager;
@@ -42,6 +46,7 @@ int main(int argc, char *argv[]) {
 
     passManager.runAll(ast.get());
 
+    // Interpret the program
     InterpretingVisitor interpreter;
     ast->accept(interpreter);
 
