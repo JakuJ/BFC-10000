@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include <Nodes/LoopNode.hpp>
-#include <Nodes/AddMultipleNode.hpp>
+#include <Nodes/AssignmentNode.hpp>
 
 void ClearCellPass::dumpStats() const {
     std::cerr << "Cell clearing loops simplified: " << hits << std::endl;
@@ -26,7 +26,7 @@ void ClearCellPass::visitSequenceNode(SequenceNode *node) {
             case '[': {
                 const auto &loop_nodes = dynamic_cast<LoopNode *>(n)->inside->nodes;
                 if (loop_nodes.size() == 1 && loop_nodes[0]->symbol == '+') {
-                    auto setNode = new AddMultipleNode(0, 0);
+                    auto setNode = new AssignmentNode(0);
                     folded.push_back(setNode);
                     hits++;
                     delete n;

@@ -40,11 +40,15 @@ public:
 
     void visitAddNode(AddNode *) override;
 
-    void visitSetNode(AddMultipleNode *node) override;
+    void visitAddMultipleNode(AddMultipleNode *node) override;
 
     void visitInputNode(InputNode *) override;
 
     void visitOutputNode(OutputNode *) override;
 
     void visitLoopNode(LoopNode *) override;
+
+    void visitAssignmentNode(AssignmentNode *node) override;
+
+    void visitMemsetNode(MemsetNode *node) override;
 };

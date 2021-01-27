@@ -26,6 +26,7 @@
 #include <Nodes/LoopNode.hpp>
 #include <Nodes/AddNode.hpp>
 #include <Nodes/AddMultipleNode.hpp>
+#include <Nodes/AssignmentNode.hpp>
 
 #define ZERO_EOF 1
 
@@ -135,23 +136,19 @@ void LLVMVisitor::visitAddNode(AddNode *node) {
     builder->CreateStore(next, current_ptr);
 }
 
-void LLVMVisitor::visitSetNode(AddMultipleNode *node) {
+void LLVMVisitor::visitAddMultipleNode(AddMultipleNode *node) {
     auto current_ptr = getCurrentPtr();
 
-    if (node->offset == 0 && node->value == 0) {
-        builder->CreateStore(ConstantInt::get(builder->getInt8Ty(), 0), current_ptr);
-    } else {
-        auto target = builder->CreateInBoundsGEP(current_ptr, ConstantInt::get(int_type, node->offset), "set_target");
+    auto target = builder->CreateInBoundsGEP(current_ptr, ConstantInt::get(int_type, node->offset), "set_target");
 
-        if (node->value != 0) {
-            auto current_value = builder->CreateLoad(current_ptr, "current");
-            auto new_value = builder->CreateMul(current_value,
-                                                ConstantInt::get(builder->getInt8Ty(), node->value, true),
-                                                "mult");
+    if (node->value != 0) {
+        auto current_value = builder->CreateLoad(current_ptr, "current");
+        auto new_value = builder->CreateMul(current_value,
+                                            ConstantInt::get(builder->getInt8Ty(), node->value, true),
+                                            "mult");
 
-            auto target_value = builder->CreateLoad(target);
-            builder->CreateStore(builder->CreateAdd(target_value, new_value), target);
-        }
+        auto target_value = builder->CreateLoad(target);
+        builder->CreateStore(builder->CreateAdd(target_value, new_value), target);
     }
 }
 
@@ -186,7 +183,7 @@ void LLVMVisitor::visitInputNode(InputNode *node) {
 
 void LLVMVisitor::visitOutputNode([[maybe_unused]] OutputNode *node) {
     auto const1 = ConstantInt::get(int_type, 1);
-    std::vector<Value *> args{const1, getCurrentPtr(), const1};
+    std::vector < Value * > args{const1, getCurrentPtr(), const1};
     builder->CreateCall(write_func, args);
 }
 
@@ -211,6 +208,14 @@ void LLVMVisitor::visitLoopNode(LoopNode *node) {
 
     scope->getBasicBlockList().push_back(end);
     builder->SetInsertPoint(end);
+}
+
+void LLVMVisitor::visitAssignmentNode(AssignmentNode *node) {
+    builder->CreateStore(ConstantInt::get(builder->getInt8Ty(), node->value), getCurrentPtr());
+}
+
+void LLVMVisitor::visitMemsetNode(MemsetNode *node) {
+    throw std::runtime_error("Not implemented: LLVMVisitor::visitMemsetNode");
 }
 
 void LLVMVisitor::dumpCode(const std::string &path) {

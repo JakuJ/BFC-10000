@@ -5,6 +5,7 @@
 
 #include <Nodes/LoopNode.hpp>
 #include <Nodes/AddMultipleNode.hpp>
+#include <Nodes/AssignmentNode.hpp>
 
 void MultiplicationLoopPass::dumpStats() const {
     std::cerr << "Multiplication loops simplified: " << hits << std::endl;
@@ -14,7 +15,7 @@ void MultiplicationLoopPass::visitLoopNode(LoopNode *node) {
     node->inside->accept(*this);
 }
 
-std::optional <std::vector<AddMultipleNode *>> MultiplicationLoopPass::trySimplify(const std::vector<INode *> &body) {
+std::optional <std::vector<INode *>> MultiplicationLoopPass::trySimplify(const std::vector<INode *> &body) {
 
     bool condition = body[0]->symbol == '+' && body[0]->value == -1;
 
@@ -34,7 +35,7 @@ std::optional <std::vector<AddMultipleNode *>> MultiplicationLoopPass::trySimpli
             {'J', {{'>', 'F'}, {'+', 'J'}}}
     };
 
-    std::vector < AddMultipleNode * > ret;
+    std::vector < INode * > ret;
     int offset = 0, mult = 0;
     char state = 'B';
 
@@ -60,7 +61,7 @@ std::optional <std::vector<AddMultipleNode *>> MultiplicationLoopPass::trySimpli
     }
 
     if ((state == 'F' || state == 'H') && offset == 0) {
-        ret.push_back(new AddMultipleNode(0, 0));
+        ret.push_back(new AssignmentNode(0));
         return std::optional(ret);
     }
 

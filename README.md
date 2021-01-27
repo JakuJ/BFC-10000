@@ -44,33 +44,30 @@ The compiler creates object files which have to be linked in order to create an 
 A range of optimization are employed in order to simplify the code and significantly reduce the number of operations required.
 The following examples use C-like pseudocode.
 
-1. Adjacent `move` and `add` instructions are folded
+1. Adjacent `+-` and `><` instructions are folded. For example `+++>>-----++--` is turned into this:
+    
+   ```c
+    tape[index] += 3;
+    index += 2;
+    tape[index] -= 5;
+    ```
+
+1. The `[-]` loop, a common idiom used for clearing the cell, is simplified to `tape[index] = 0`
+
+1. Any sequence of instructions that starts with clearing the current cell and then changing its value is folded into a single assignment. 
+   This means such a sequence: `[-]+++[-]-----` would be translated to this assignment: `tape[index] = -5;` 
    
-Before: `+++>>-----++--`
+1. Unreachable loops (such that occur immediately after another loop) are eliminated.
 
-After:
-```c
-tape[index] += 3;
-index += 2;
-tape[index] -= 5;
-```
+1. Multiplication loops are simplified to a few addition operations. This means that such code: `[->++<<<--->>]` would be translated to this:
 
-2. The `[-]` loop, a common idiom used for clearing the cell, is simplified to `tape[index] = 0`.
-
-3. Unreachable loops (such that occur immediately after another loop) are eliminated.
-
-4. Multiplication loops are simplified to a few addition operations
-   
-Before: `[->++<<<--->>]`
-
-After:
-```c
-while (tape[index] != 0) {
-    tape[index + 1] += 2 * tape[index];
-    tape[index - 2] -= 3 * tape[index];
-    tape[index] = 0; // loop executes at most once
-}
-```
+    ```c
+    while (tape[index] != 0) {
+        tape[index + 1] += 2 * tape[index];
+        tape[index - 2] -= 3 * tape[index];
+        tape[index] = 0; // loop executes at most once
+    }
+    ```
 
 # Example sources
 

@@ -7,7 +7,7 @@
 #include "OptimizationPass.hpp"
 
 class MultiplicationLoopPass : public OptimizationPass {
-    static std::optional<std::vector<AddMultipleNode *>> trySimplify(const std::vector<INode *> &);
+    static std::optional<std::vector<INode *>> trySimplify(const std::vector<INode *> &);
 
 public:
     void visitLoopNode(LoopNode *node) override;

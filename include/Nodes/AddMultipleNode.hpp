@@ -11,6 +11,6 @@ struct AddMultipleNode : public INode {
     }
 
     void accept(NodeVisitor &visitor) override {
-        visitor.visitSetNode(this);
+        visitor.visitAddMultipleNode(this);
     }
 };

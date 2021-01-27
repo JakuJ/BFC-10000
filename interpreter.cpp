@@ -9,6 +9,7 @@
 #include <Visitors/Passes/UnreachableLoopPass.hpp>
 #include <Visitors/Passes/ClearCellPass.hpp>
 #include <Visitors/Passes/MultiplicationLoopPass.hpp>
+#include <Visitors/Passes/AssignmentPass.hpp>
 
 // FLEX/BISON externals
 extern FILE *yyin;
@@ -42,6 +43,7 @@ int main(int argc, char *argv[]) {
     passManager.addPass(new FoldingPass());
     passManager.addPass(new UnreachableLoopPass());
     passManager.addPass(new ClearCellPass());
+    passManager.addPass(new AssignmentPass);
     passManager.addPass(new MultiplicationLoopPass());
 
     passManager.runAll(ast.get());

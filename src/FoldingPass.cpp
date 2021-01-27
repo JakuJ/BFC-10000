@@ -8,7 +8,7 @@
 #include <Nodes/AddNode.hpp>
 
 void FoldingPass::dumpStats() const {
-    std::cerr << "Folded instructions: " << hits << std::endl;
+    std::cerr << "Folded instruction sequences: " << hits << std::endl;
 }
 
 void FoldingPass::visitLoopNode(LoopNode *node) {
@@ -31,6 +31,7 @@ void FoldingPass::visitSequenceNode(SequenceNode *node) {
     // Add the Move/Add node when folding is done
     auto endFold = [&]() {
         if (foldedValue != 0) {
+            hits++;
             if (foldedSymbol == '>') {
                 folded.push_back(new MoveNode(foldedValue));
             } else if (foldedSymbol == '+') {
@@ -53,7 +54,6 @@ void FoldingPass::visitSequenceNode(SequenceNode *node) {
             case '>':
                 if (n->symbol == foldedSymbol) {
                     foldedValue += n->value;
-                    hits++;
                     delete n;
                 } else {
                     endFold();

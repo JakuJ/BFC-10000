@@ -1,13 +1,14 @@
 #include "Visitors/InterpretingVisitor.hpp"
 
 #include <iostream>
+#include <algorithm>
 
 #include <Nodes/MoveNode.hpp>
 #include <Nodes/AddNode.hpp>
 #include <Nodes/LoopNode.hpp>
 #include <Nodes/AddMultipleNode.hpp>
-
-InterpretingVisitor::InterpretingVisitor() : tape(65535, 0), pointer(0) {}
+#include <Nodes/AssignmentNode.hpp>
+#include <Nodes/MemsetNode.hpp>
 
 void InterpretingVisitor::visitMoveNode(MoveNode *node) {
     pointer += node->value;
@@ -17,12 +18,8 @@ void InterpretingVisitor::visitAddNode(AddNode *node) {
     tape[pointer] += node->value;
 }
 
-void InterpretingVisitor::visitSetNode(AddMultipleNode *node) {
-    if (node->offset == 0 && node->value == 0) {
-        tape[pointer] = 0;
-    } else {
-        tape[pointer + node->offset] += tape[pointer] * node->value;
-    }
+void InterpretingVisitor::visitAddMultipleNode(AddMultipleNode *node) {
+    tape[pointer + node->offset] += tape[pointer] * node->value;
 }
 
 void InterpretingVisitor::visitInputNode([[maybe_unused]] InputNode *node) {
@@ -43,4 +40,19 @@ void InterpretingVisitor::visitLoopNode(LoopNode *node) {
     while (tape[pointer] != 0) {
         node->inside->accept(*this);
     }
+}
+
+void InterpretingVisitor::visitAssignmentNode(AssignmentNode *node) {
+    tape[pointer] = node->value;
+}
+
+void InterpretingVisitor::visitMemsetNode(MemsetNode *node) {
+    int first = pointer;
+    int second = pointer + node->range;
+
+    if (first > second) {
+        std::swap(first, second);
+    }
+
+    std::fill(&tape[first], &tape[second] + 1, node->value);
 }
