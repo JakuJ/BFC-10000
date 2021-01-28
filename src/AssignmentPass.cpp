@@ -6,7 +6,7 @@
 #include <Nodes/AssignmentNode.hpp>
 
 void AssignmentPass::dumpStats() const {
-    std::cerr << "Assignments simplified: " << hits << std::endl;
+    std::cerr << "Nonzero assignments simplified: " << hits << std::endl;
 }
 
 void AssignmentPass::visitLoopNode(LoopNode *node) {

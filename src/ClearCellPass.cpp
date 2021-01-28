@@ -6,7 +6,7 @@
 #include <Nodes/AssignmentNode.hpp>
 
 void ClearCellPass::dumpStats() const {
-    std::cerr << "Cell clearing loops simplified: " << hits << std::endl;
+    std::cerr << "Zero-assignments found: " << hits << std::endl;
 }
 
 void ClearCellPass::visitLoopNode(LoopNode *node) {

@@ -4,7 +4,7 @@
 
 class OptimizationPass : public NodeVisitor {
 protected:
-    int hits = 0;
+    long hits = 0;
 
 public:
     virtual ~OptimizationPass() = default;

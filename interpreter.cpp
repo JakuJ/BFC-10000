@@ -46,6 +46,7 @@ int main(int argc, char *argv[]) {
     passManager.addPass(new ClearCellPass());
     passManager.addPass(new AssignmentPass());
     passManager.addPass(new MemsetPass());
+    passManager.addPass(new FoldingPass()); // merging moves after a memset
     passManager.addPass(new MultiplicationLoopPass());
 
     passManager.runAll(ast.get());

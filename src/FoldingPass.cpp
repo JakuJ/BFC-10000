@@ -8,7 +8,7 @@
 #include <Nodes/AddNode.hpp>
 
 void FoldingPass::dumpStats() const {
-    std::cerr << "Folded instruction sequences: " << hits << std::endl;
+    std::cerr << "Folded instruction sequences: " << hits << " (" << symbols << " symbols)" << std::endl;
 }
 
 void FoldingPass::visitLoopNode(LoopNode *node) {
@@ -26,12 +26,16 @@ void FoldingPass::visitSequenceNode(SequenceNode *node) {
 
     // Initialize add/move counters
     int foldedValue = 0;
-    char foldedSymbol = '+';
+    char foldedSymbol = '?';
+    long last_symbols = symbols;
 
     // Add the Move/Add node when folding is done
     auto endFold = [&]() {
         if (foldedValue != 0) {
-            hits++;
+            if (last_symbols != symbols) {
+                // Only count sequences of more than one + or > as "folded"
+                hits++;
+            }
             if (foldedSymbol == '>') {
                 folded.push_back(new MoveNode(foldedValue));
             } else if (foldedSymbol == '+') {
@@ -40,6 +44,7 @@ void FoldingPass::visitSequenceNode(SequenceNode *node) {
         }
 
         // Start new fold
+        foldedSymbol = '?';
         foldedValue = 0;
     };
 
@@ -53,12 +58,14 @@ void FoldingPass::visitSequenceNode(SequenceNode *node) {
             case '+':
             case '>':
                 if (n->symbol == foldedSymbol) {
+                    symbols++;
                     foldedValue += n->value;
                     delete n;
                 } else {
                     endFold();
                     foldedSymbol = n->symbol;
                     foldedValue = n->value;
+                    last_symbols = symbols;
                 }
                 break;
             default:

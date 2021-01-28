@@ -16,54 +16,42 @@ void MultiplicationLoopPass::visitLoopNode(LoopNode *node) {
 }
 
 std::optional <std::vector<INode *>> MultiplicationLoopPass::trySimplify(const std::vector<INode *> &body) {
+    std::vector < INode * > ret;
+    int offset = 0, multiplier = 0;
+    int loop_cell_change = 0;
+    char last = body[0]->symbol;
 
-    bool condition = body[0]->symbol == '+' && body[0]->value == -1;
-    // TODO: What if the -1 is at the end of the loop?
-
-    if (!condition) {
-        return std::nullopt;
-    }
-
-    std::unordered_map<char, std::unordered_map<char, char>> machine{
-            {'B', {{'>', 'C'}}},
-            {'C', {{'>', 'D'}, {'+', 'E'}}},
-            {'D', {{'>', 'D'}, {'+', 'E'}}},
-            {'E', {{'>', 'F'}, {'+', 'G'}}},
-            {'G', {{'>', 'F'}, {'+', 'G'}}},
-            {'F', {{'>', 'H'}, {'+', 'I'}}},
-            {'H', {{'>', 'H'}, {'+', 'I'}}},
-            {'I', {{'>', 'F'}, {'+', 'J'}}},
-            {'J', {{'>', 'F'}, {'+', 'J'}}}
+    auto dump = [&]() {
+        if (offset == 0) {
+            loop_cell_change += multiplier;
+        } else {
+            ret.push_back(new AddMultipleNode(offset, multiplier));
+        }
+        multiplier = 0;
     };
 
-    std::vector < INode * > ret;
-    int offset = 0, mult = 0;
-    char state = 'B';
-
-    for (int i = 1; i < body.size(); i++) {
-        char action = body[i]->symbol;
-
-        if (machine[state].find(action) == machine[state].end()) {
-            goto failure;
+    // Interpret
+    for (INode *n : body) {
+        if (n->symbol == '>') {
+            if (last != '>') {
+                dump();
+            }
+            offset += n->value;
+        } else if (n->symbol == '+') {
+            multiplier += n->value;
         } else {
-            state = machine[state][action];
+            goto failure;
         }
-
-        if (state == 'F') {
-            ret.push_back(new AddMultipleNode(offset, mult));
-            mult = 0;
-        }
-
-        if (action == '+') {
-            mult += body[i]->value;
-        } else if (action == '>') {
-            offset += body[i]->value;
-        }
+        last = n->symbol;
     }
 
-    if ((state == 'F' || state == 'H') && offset == 0) {
+    if (multiplier != 0) {
+        dump();
+    }
+
+    if (offset == 0 && loop_cell_change == -1) {
         ret.push_back(new AssignmentNode(0));
-        return std::optional(ret);
+        return ret;
     }
 
     failure:
