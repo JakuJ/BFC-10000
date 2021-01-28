@@ -34,6 +34,16 @@ void InterpretingVisitor::visitInputNode([[maybe_unused]] InputNode *node) {
 
 void InterpretingVisitor::visitOutputNode([[maybe_unused]] OutputNode *node) {
     std::cout << static_cast<char>(tape[pointer]);
+    charCount++;
+
+    if (tape[pointer] == 10) {
+        // newline encountered, resetting flush counter
+        charCount = 0;
+    } else if (charCount >= 100) {
+        // flush every 100 characters
+        charCount = 0;
+        std::cout << std::flush;
+    }
 }
 
 void InterpretingVisitor::visitLoopNode(LoopNode *node) {

@@ -31,8 +31,6 @@ ASTBuilder builder;
 
 ROOT    : STRING ;
 
-NONEMPTY: STRING OP;
-
 STRING  : STRING OP | %empty;
 
 OP      : NEWLINE   { ++lineNumber; }
@@ -45,6 +43,6 @@ OP      : NEWLINE   { ++lineNumber; }
         | LOOP
         ;
 
-LOOP    : OPEN { builder.beginLoop(); } NONEMPTY CLOSE { builder.endLoop(); }
+LOOP    : OPEN { builder.beginLoop(); } STRING CLOSE { builder.endLoop(); }
 
 %%

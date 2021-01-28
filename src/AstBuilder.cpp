@@ -31,9 +31,15 @@ void ASTBuilder::endLoop() {
         throw std::runtime_error("No matching loop to finish");
     }
     stack.pop();
+
+    // Remove empty loops
+    auto *loop = dynamic_cast<LoopNode *>(stack.top()->nodes.back());
+    if (loop->inside->nodes.empty()) {
+        stack.top()->nodes.pop_back();
+    }
 }
 
-std::unique_ptr<INode> ASTBuilder::getAST() {
+std::unique_ptr <INode> ASTBuilder::getAST() {
     owned = true;
     return std::unique_ptr<INode>(stack.top());
 }

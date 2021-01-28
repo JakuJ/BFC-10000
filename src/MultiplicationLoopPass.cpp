@@ -18,6 +18,7 @@ void MultiplicationLoopPass::visitLoopNode(LoopNode *node) {
 std::optional <std::vector<INode *>> MultiplicationLoopPass::trySimplify(const std::vector<INode *> &body) {
 
     bool condition = body[0]->symbol == '+' && body[0]->value == -1;
+    // TODO: What if the -1 is at the end of the loop?
 
     if (!condition) {
         return std::nullopt;

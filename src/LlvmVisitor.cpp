@@ -27,6 +27,7 @@
 #include <Nodes/AddNode.hpp>
 #include <Nodes/AddMultipleNode.hpp>
 #include <Nodes/AssignmentNode.hpp>
+#include <Nodes/MemsetNode.hpp>
 
 #define ZERO_EOF 1
 
@@ -215,7 +216,17 @@ void LLVMVisitor::visitAssignmentNode(AssignmentNode *node) {
 }
 
 void LLVMVisitor::visitMemsetNode(MemsetNode *node) {
-    throw std::runtime_error("Not implemented: LLVMVisitor::visitMemsetNode");
+
+    auto ptr = getCurrentPtr();
+    auto val = ConstantInt::get(builder->getInt8Ty(), node->value);
+
+    auto range = node->range;
+    if (range < 0) {
+        ptr = builder->CreateInBoundsGEP(ptr, ConstantInt::get(int_type, node->range), "memset_start");
+        range = -range;
+    }
+
+    builder->CreateMemSet(ptr, val, range + 1, MaybeAlign(1));
 }
 
 void LLVMVisitor::dumpCode(const std::string &path) {

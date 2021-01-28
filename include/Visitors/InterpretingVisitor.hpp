@@ -7,6 +7,7 @@ class InterpretingVisitor : public NodeVisitor {
 
     std::array<int, 65535> tape;
     int pointer = 0;
+    int charCount = 0;
 
 public:
     void visitMoveNode(MoveNode *node) override;

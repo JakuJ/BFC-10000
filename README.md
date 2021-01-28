@@ -69,6 +69,9 @@ The following examples use C-like pseudocode.
     }
     ```
 
+1. Alternating "set to N" and "move one cell" instructions are simplified to a memset. Example -
+setting 8 consecutive cells to value of 3: `[-]+++>[-]+++>[-]+++>[-]+++[-]+++>[-]+++>[-]+++>[-]+++` is turned into `memset(&tape[index], 3, 8); index += 7;`.
+
 # Example sources
 
 [A Mandelbrot set viewer](https://raw.githubusercontent.com/sci4me/JBFJit/master/progs/mand.bf) by Erik Bosman
