@@ -4,7 +4,7 @@ project(Compiler)
 set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-I/usr/local/opt/flex/include")
-set(CMAKE_CXX_FLAGS "-Wall -O3 -march=native")
+add_compile_options("-Wall" "-pedantic" "-Ofast" "-march=native" "-fomit-frame-pointer")
 
 # FLEX and BISON
 
